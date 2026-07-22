@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Content-Type: application/json');
 }
 $host = 'localhost';
-$dbname = 'ngocrong';
+$dbname = 'team2026';
 $user = 'root';
 $pass = '';
 $pdo = null;

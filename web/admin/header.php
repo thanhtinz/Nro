@@ -23,6 +23,7 @@ $__title  = $__title  ?? 'Admin';
         <a href="giftcode.php" class="<?= $__active==='giftcode'?'on':'' ?>">Giftcode</a>
         <a href="notify.php"   class="<?= $__active==='notify'?'on':'' ?>">Thông báo</a>
         <a href="payments.php" class="<?= $__active==='payments'?'on':'' ?>">Nạp thẻ</a>
+        <a href="server.php"   class="<?= $__active==='server'?'on':'' ?>">⚙ Server</a>
         <span class="navsep"></span>
         <a href="items.php"  class="<?= $__active==='items'?'on':'' ?>">Vật phẩm</a>
         <a href="bosses.php" class="<?= $__active==='bosses'?'on':'' ?>">Boss/Quái</a>

@@ -1,7 +1,7 @@
 <?php
 // connect.php
 $ip_sv = "localhost";
-$dbname_sv = "ngocrong";
+$dbname_sv = "team2026";
 $user_sv = "root";
 $pass_sv = "";
 
