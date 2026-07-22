@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import nro.models.data.LocalManager;
 import nro.models.boss.Boss_Manager.BossManager;
 import nro.models.services.Service;
+import nro.models.event.EventManager;
 import nro.models.utils.Logger;
 
 /**
@@ -24,6 +25,12 @@ public class WebControlService extends Thread {
     private static WebControlService instance;
     private final long startMillis = System.currentTimeMillis();
     private volatile boolean running = true;
+
+    /** Danh sách sự kiện điều khiển được (khớp biến trong EventManager) */
+    private static final String[] EVENTS = {
+        "LUNNAR_NEW_YEAR", "INTERNATIONAL_WOMANS_DAY", "CHRISTMAS",
+        "HALLOWEEN", "HUNG_VUONG", "TRUNG_THU", "TOP_UP"
+    };
 
     private WebControlService() {
         this.setName("WebControlService");
@@ -70,7 +77,44 @@ public class WebControlService extends Thread {
             setStatus(con, "uptime", String.valueOf(uptime));
             setStatus(con, "maintenance", String.valueOf(maintenance));
             setStatus(con, "rate_exp", String.valueOf(rateExp));
+            setStatus(con, "events", eventStates());
             setStatus(con, "last_heartbeat", String.valueOf(System.currentTimeMillis() / 1000L));
+        }
+    }
+
+    /** Trạng thái các sự kiện dạng "KEY:1,KEY2:0,..." để web đọc */
+    private String eventStates() {
+        StringBuilder sb = new StringBuilder();
+        for (String ev : EVENTS) {
+            if (sb.length() > 0) sb.append(',');
+            sb.append(ev).append(':').append(getEvent(ev) ? '1' : '0');
+        }
+        return sb.toString();
+    }
+
+    private boolean getEvent(String key) {
+        switch (key) {
+            case "LUNNAR_NEW_YEAR": return EventManager.LUNNAR_NEW_YEAR;
+            case "INTERNATIONAL_WOMANS_DAY": return EventManager.INTERNATIONAL_WOMANS_DAY;
+            case "CHRISTMAS": return EventManager.CHRISTMAS;
+            case "HALLOWEEN": return EventManager.HALLOWEEN;
+            case "HUNG_VUONG": return EventManager.HUNG_VUONG;
+            case "TRUNG_THU": return EventManager.TRUNG_THU;
+            case "TOP_UP": return EventManager.TOP_UP;
+            default: return false;
+        }
+    }
+
+    private boolean setEvent(String key, boolean on) {
+        switch (key) {
+            case "LUNNAR_NEW_YEAR": EventManager.LUNNAR_NEW_YEAR = on; return true;
+            case "INTERNATIONAL_WOMANS_DAY": EventManager.INTERNATIONAL_WOMANS_DAY = on; return true;
+            case "CHRISTMAS": EventManager.CHRISTMAS = on; return true;
+            case "HALLOWEEN": EventManager.HALLOWEEN = on; return true;
+            case "HUNG_VUONG": EventManager.HUNG_VUONG = on; return true;
+            case "TRUNG_THU": EventManager.TRUNG_THU = on; return true;
+            case "TOP_UP": EventManager.TOP_UP = on; return true;
+            default: return false;
         }
     }
 
@@ -136,6 +180,15 @@ public class WebControlService extends Thread {
             case "reset_boss": {
                 BossManager.gI().loadBoss();
                 return "Đã nạp lại / reset boss";
+            }
+            case "event_toggle": {
+                // params: "KEY:1" (bật) hoặc "KEY:0" (tắt)
+                String[] p = params == null ? new String[0] : params.split(":");
+                if (p.length < 2) return "Sai tham số (cần KEY:0/1)";
+                String key = p[0].trim();
+                boolean on = p[1].trim().equals("1");
+                if (!setEvent(key, on)) return "Sự kiện không hợp lệ: " + key;
+                return "Đã " + (on ? "bật" : "tắt") + " sự kiện " + key;
             }
             case "reset_rank": {
                 int n = resetRank();

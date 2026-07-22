@@ -24,6 +24,7 @@ $__title  = $__title  ?? 'Admin';
         <a href="notify.php"   class="<?= $__active==='notify'?'on':'' ?>">Thông báo</a>
         <a href="payments.php" class="<?= $__active==='payments'?'on':'' ?>">Nạp thẻ</a>
         <a href="server.php"   class="<?= $__active==='server'?'on':'' ?>">⚙ Server</a>
+        <a href="events.php"   class="<?= $__active==='events'?'on':'' ?>">Sự kiện</a>
         <span class="navsep"></span>
         <a href="items.php"  class="<?= $__active==='items'?'on':'' ?>">Vật phẩm</a>
         <a href="bosses.php" class="<?= $__active==='bosses'?'on':'' ?>">Boss/Quái</a>
@@ -31,6 +32,8 @@ $__title  = $__title  ?? 'Admin';
         <a href="maps.php"   class="<?= $__active==='maps'?'on':'' ?>">Bản đồ</a>
         <a href="badges.php" class="<?= $__active==='badges'?'on':'' ?>">Danh hiệu</a>
         <a href="shops.php"  class="<?= $__active==='shops'?'on':'' ?>">Cửa hàng</a>
+        <a href="clans.php"  class="<?= $__active==='clans'?'on':'' ?>">Bang hội</a>
+        <a href="tasks.php"  class="<?= $__active==='tasks'?'on':'' ?>">Nhiệm vụ</a>
     </nav>
     <div class="me">
         <span><?= e($_SESSION['admin_username'] ?? '') ?></span>
