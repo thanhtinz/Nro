@@ -2,9 +2,13 @@
 
 Cho phép trang admin điều khiển server game **đang chạy** (bảo trì, EXP, reset boss, reset BXH, thông báo in-game, restart) và hiển thị trạng thái sống của server (online, uptime, EXP, bảo trì).
 
-Vì web (PHP) không gọi trực tiếp được server (Java), ta dùng **2 bảng DB làm cầu nối**:
-- `server_control` — hàng đợi lệnh: web ghi → server đọc & thực thi.
+Vì web (PHP) không gọi trực tiếp được server (Java), ta dùng **mô hình config-sync** với 2 bảng:
+- `server_config` — **admin chỉ chỉnh giá trị**, server đọc mỗi ~3 giây và **tự áp dụng** (không cần "gửi lệnh").
 - `server_status` — server ghi trạng thái sống → web đọc hiển thị.
+
+Cách hoạt động:
+- **Setting** (`rate_exp`, `maintenance`, `event_*`): đặt = trạng thái mong muốn → server đồng bộ liên tục.
+- **Hành động 1 lần** (`do_reset_boss`, `do_reset_rank`, `do_restart`, `notify_seq`): web đổi giá trị (timestamp) → server phát hiện thay đổi và chạy đúng 1 lần.
 
 ## Cài đặt (3 bước)
 
@@ -36,28 +40,32 @@ java -server -Dfile.encoding=UTF-8 -jar 20.jar
 
 > Cầu nối dùng chung DB với server (`LocalManager.getConnection()`), nên **web và server phải trỏ cùng 1 DB** (đã đồng bộ web → `team2026`).
 
-## Các lệnh hỗ trợ
+## Khoá cấu hình (`server_config`)
 
-| Lệnh (web gửi) | Hành động trong server |
-|----------------|------------------------|
-| `notify_all`   | `Service.gI().sendThongBaoAllPlayer(text)` — thông báo tới tất cả người chơi online |
-| `set_exp`      | `Manager.RATE_EXP_SERVER = n` (1–127) |
-| `reset_boss`   | `BossManager.gI().loadBoss()` |
-| `reset_rank`   | Xoá bảng `super_rank` (reset BXH) |
-| `maintenance`  | `Maintenance.gI().startSeconds(n)` — đếm ngược rồi vào bảo trì |
-| `restart`      | `ServerManager.gI().close()` — chạy `restart_server.bat` & thoát |
+| Khoá | Kiểu | Server áp dụng |
+|------|------|----------------|
+| `rate_exp` | setting (1–127) | `Manager.RATE_EXP_SERVER` |
+| `maintenance` | setting (0/1) | 1 → `Maintenance.gI().startSeconds(60)` |
+| `event_LUNNAR_NEW_YEAR` … `event_TOP_UP` | setting (0/1) | `EventManager.*` |
+| `notify_text` + `notify_seq` | hành động | đổi `notify_seq` → `Service.gI().sendThongBaoAllPlayer(notify_text)` |
+| `do_reset_boss` | hành động | đổi giá trị → `BossManager.gI().loadBoss()` |
+| `do_reset_rank` | hành động | đổi giá trị → xoá `super_rank` |
+| `do_restart` | hành động | đổi giá trị → `ServerManager.gI().close()` |
 
-Server xử lý hàng đợi mỗi **~3 giây**, ghi kết quả vào `server_control.result` và cập nhật
-`server_status` (online, uptime, exp, maintenance, heartbeat).
+Server đọc `server_config` mỗi **~3 giây**, áp dụng setting (idempotent) + chạy hành động khi giá trị đổi,
+đồng thời cập nhật `server_status` (online, uptime, exp, maintenance, events, heartbeat).
+**Admin chỉ cần chỉnh giá trị & lưu — không cần bấm "gửi lệnh".**
 
 ## Kiểm tra hoạt động
 - Vào admin → **⚙ Server**: nếu thẻ "Trạng thái server" hiện 🟢 Online nghĩa là server đang gửi heartbeat (cầu nối chạy tốt).
 - Gửi thử lệnh "Gửi thông báo" — trong ít giây trạng thái lệnh chuyển sang **Xong** và người chơi thấy thông báo.
 
-## Mở rộng thêm lệnh
-Thêm `case "ten_lenh":` trong `WebControlService.execute()` (server) và thêm lệnh vào whitelist
-`$CMDS` cùng nút bấm trong `web/admin/server.php`.
+## Mở rộng thêm cấu hình/hành động
+- Setting mới: thêm khoá vào `server_config`, đọc & áp dụng trong `WebControlService.applySettings()`,
+  thêm ô nhập trong `web/admin/server.php`.
+- Hành động mới: thêm khoá `do_...` vào mảng `TRIGGERS` + `fireTrigger()` (server) và nút bấm ở web
+  (ghi `time()` vào khoá đó).
 
 ## An toàn
-- Trang `server.php` yêu cầu đăng nhập admin, dùng CSRF + whitelist lệnh.
-- Các lệnh nguy hiểm (bảo trì, restart, reset BXH) đều có xác nhận.
+- Trang `server.php` / `events.php` yêu cầu đăng nhập admin, dùng CSRF + whitelist khoá.
+- Các hành động nguy hiểm (bảo trì, restart, reset BXH) đều có xác nhận.

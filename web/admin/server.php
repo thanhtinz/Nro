@@ -5,52 +5,60 @@ require_once __DIR__ . '/config.php';
 require_admin();
 $c = db();
 
-// Kiểm tra bảng cầu nối tồn tại chưa
 function bridge_ready(mysqli $c): bool
 {
     $r = $c->query("SELECT 1 FROM information_schema.tables
-                     WHERE table_schema = DATABASE() AND table_name = 'server_control' LIMIT 1");
+                     WHERE table_schema = DATABASE() AND table_name = 'server_config' LIMIT 1");
     return $r && $r->num_rows > 0;
 }
 $ready = bridge_ready($c);
 
-// Danh sách lệnh hợp lệ (whitelist)
-$CMDS = ['notify_all','set_exp','reset_boss','reset_rank','maintenance','restart'];
+/** Ghi 1 khoá cấu hình (server sẽ tự đọc & áp dụng) */
+function set_cfg(mysqli $c, string $key, string $val): void
+{
+    $stmt = $c->prepare(
+        'INSERT INTO server_config (cfg_key, cfg_value) VALUES (?, ?)
+         ON DUPLICATE KEY UPDATE cfg_value = VALUES(cfg_value)'
+    );
+    $stmt->bind_param('ss', $key, $val);
+    $stmt->execute(); $stmt->close();
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $ready) {
     csrf_check();
-    $cmd = $_POST['command'] ?? '';
-    $params = trim($_POST['params'] ?? '');
-    if (!in_array($cmd, $CMDS, true)) {
-        flash('Lệnh không hợp lệ.');
-    } else {
-        $by = $_SESSION['admin_username'] ?? '';
-        $stmt = $c->prepare('INSERT INTO server_control (command, params, created_by) VALUES (?,?,?)');
-        $stmt->bind_param('sss', $cmd, $params, $by);
-        $stmt->execute(); $stmt->close();
-        flash('Đã gửi lệnh "' . $cmd . '" tới server. Server sẽ xử lý trong ít giây.');
+    $do = $_POST['do'] ?? '';
+    if ($do === 'save_settings') {
+        $exp = (string)max(1, min(127, (int)($_POST['rate_exp'] ?? 1)));
+        $mt  = ($_POST['maintenance'] ?? '') === '1' ? '1' : '0';
+        set_cfg($c, 'rate_exp', $exp);
+        set_cfg($c, 'maintenance', $mt);
+        flash('Đã lưu cấu hình. Server tự áp dụng trong ít giây.');
+    } elseif ($do === 'notify') {
+        $text = trim($_POST['notify_text'] ?? '');
+        if ($text !== '') {
+            set_cfg($c, 'notify_text', $text);
+            set_cfg($c, 'notify_seq', (string)time()); // đổi seq -> server gửi 1 lần
+            flash('Đã đặt thông báo. Server sẽ gửi tới người chơi trong ít giây.');
+        }
+    } elseif (in_array($do, ['do_reset_boss','do_reset_rank','do_restart'], true)) {
+        set_cfg($c, $do, (string)time()); // đổi giá trị -> server chạy 1 lần
+        flash('Đã yêu cầu: ' . $do . '. Server sẽ thực hiện trong ít giây.');
     }
     header('Location: server.php'); exit();
 }
 
-// Đọc trạng thái sống
-$status = [];
+// Đọc cấu hình + trạng thái
+$cfg = []; $status = [];
 if ($ready) {
-    $r = $c->query('SELECT sv_key, sv_value, updated_at FROM server_status');
-    if ($r) foreach ($r->fetch_all(MYSQLI_ASSOC) as $row) $status[$row['sv_key']] = $row;
+    $r = $c->query('SELECT cfg_key, cfg_value FROM server_config');
+    if ($r) foreach ($r->fetch_all(MYSQLI_ASSOC) as $row) $cfg[$row['cfg_key']] = $row['cfg_value'];
+    $r = $c->query('SELECT sv_key, sv_value FROM server_status');
+    if ($r) foreach ($r->fetch_all(MYSQLI_ASSOC) as $row) $status[$row['sv_key']] = $row['sv_value'];
 }
-$hb = (int)($status['last_heartbeat']['sv_value'] ?? 0);
-$svOnline = $hb > 0 && (time() - $hb) < 30; // heartbeat trong 30s => server đang chạy bridge
-$uptime = (int)($status['uptime']['sv_value'] ?? 0);
+$hb = (int)($status['last_heartbeat'] ?? 0);
+$svOnline = $hb > 0 && (time() - $hb) < 30;
+$uptime = (int)($status['uptime'] ?? 0);
 $uptimeStr = sprintf('%dh %dm', intdiv($uptime, 3600), intdiv($uptime % 3600, 60));
-
-// Lịch sử lệnh
-$history = [];
-if ($ready) {
-    $r = $c->query('SELECT id, command, params, status, result, created_by, created_at, processed_at
-                      FROM server_control ORDER BY id DESC LIMIT 30');
-    if ($r) $history = $r->fetch_all(MYSQLI_ASSOC);
-}
 
 require_once __DIR__ . '/header.php';
 $tok = csrf_token();
@@ -59,98 +67,71 @@ $tok = csrf_token();
 
 <?php if (!$ready): ?>
     <div class="note" style="border-left-color:var(--danger)">
-        <b>Chưa cài cầu nối.</b> Hãy chạy file <code>web/admin/sql/bridge.sql</code> trên DB game,
-        thêm <code>WebControlService.gI();</code> vào <code>ServerManager.init()</code> rồi build lại server.
-        Xem hướng dẫn ở <code>docs/PHASE2_SERVER_BRIDGE.md</code>.
+        Chưa cài cầu nối. Chạy <code>web/admin/sql/bridge.sql</code>, thêm
+        <code>WebControlService.gI();</code> vào <code>ServerManager.init()</code>, build lại server.
+        Xem <code>docs/PHASE2_SERVER_BRIDGE.md</code>.
     </div>
 <?php else: ?>
 
     <div class="cards">
         <div class="card <?= $svOnline ? 'ok' : 'warn' ?>">
             <div class="num"><?= $svOnline ? '🟢 Online' : '🔴 Offline' ?></div>
-            <div class="lbl">Trạng thái server<?= $hb ? ' · nhịp ' . (time() - $hb) . 's trước' : '' ?></div>
+            <div class="lbl">Server<?= $hb ? ' · nhịp ' . (time() - $hb) . 's trước' : '' ?></div>
         </div>
-        <div class="card"><div class="num"><?= (int)($status['online_players']['sv_value'] ?? 0) ?></div><div class="lbl">Người chơi online</div></div>
-        <div class="card"><div class="num">x<?= (int)($status['rate_exp']['sv_value'] ?? 1) ?></div><div class="lbl">Hệ số EXP</div></div>
-        <div class="card <?= (int)($status['maintenance']['sv_value'] ?? 0) ? 'warn' : '' ?>">
-            <div class="num"><?= (int)($status['maintenance']['sv_value'] ?? 0) ? 'BẢO TRÌ' : 'Bình thường' ?></div>
-            <div class="lbl">Chế độ</div>
+        <div class="card"><div class="num"><?= (int)($status['online_players'] ?? 0) ?></div><div class="lbl">Online</div></div>
+        <div class="card"><div class="num">x<?= (int)($status['rate_exp'] ?? 1) ?></div><div class="lbl">EXP (thực tế)</div></div>
+        <div class="card <?= (int)($status['maintenance'] ?? 0) ? 'warn' : '' ?>">
+            <div class="num"><?= (int)($status['maintenance'] ?? 0) ? 'BẢO TRÌ' : 'Bình thường' ?></div><div class="lbl">Chế độ</div>
         </div>
         <div class="card"><div class="num"><?= e($uptimeStr) ?></div><div class="lbl">Uptime</div></div>
     </div>
     <?php if (!$svOnline): ?>
-        <div class="note" style="border-left-color:var(--warn)">Server chưa gửi nhịp (heartbeat) gần đây — có thể server đang tắt hoặc chưa gắn cầu nối. Lệnh gửi đi sẽ chờ tới khi server chạy.</div>
+        <div class="note" style="border-left-color:var(--warn)">Server chưa gửi heartbeat — có thể đang tắt hoặc chưa gắn cầu nối. Chỉnh vẫn được lưu, server áp dụng khi chạy.</div>
     <?php endif; ?>
 
     <div class="grid2">
         <div class="box">
-            <h2>Thông báo / EXP</h2>
+            <h2>Cấu hình (chỉnh là server tự áp dụng)</h2>
             <form method="post">
                 <input type="hidden" name="csrf" value="<?= e($tok) ?>">
-                <input type="hidden" name="command" value="notify_all">
-                <label>Gửi thông báo tới TẤT CẢ người chơi (in-game)</label>
-                <input type="text" name="params" placeholder="Nội dung thông báo..." required>
-                <button type="submit">Gửi thông báo</button>
-            </form>
-            <hr style="border-color:var(--line);margin:16px 0">
-            <form method="post">
-                <input type="hidden" name="csrf" value="<?= e($tok) ?>">
-                <input type="hidden" name="command" value="set_exp">
-                <label>Đặt hệ số EXP server (1–127)</label>
-                <input type="number" name="params" min="1" max="127" value="<?= (int)($status['rate_exp']['sv_value'] ?? 1) ?>" required>
-                <button type="submit">Cập nhật EXP</button>
+                <input type="hidden" name="do" value="save_settings">
+                <label>Hệ số EXP (1–127)</label>
+                <input type="number" name="rate_exp" min="1" max="127" value="<?= (int)($cfg['rate_exp'] ?? 1) ?>">
+                <label style="margin-top:10px">Bảo trì</label>
+                <select name="maintenance">
+                    <option value="0" <?= (int)($cfg['maintenance'] ?? 0) === 0 ? 'selected' : '' ?>>Tắt (bình thường)</option>
+                    <option value="1" <?= (int)($cfg['maintenance'] ?? 0) === 1 ? 'selected' : '' ?>>Bật bảo trì</option>
+                </select>
+                <button type="submit">Lưu cấu hình</button>
             </form>
         </div>
 
         <div class="box">
-            <h2>Vận hành</h2>
-            <form method="post" onsubmit="return confirm('Reset (nạp lại) toàn bộ boss?')">
+            <h2>Thông báo & Hành động</h2>
+            <form method="post">
                 <input type="hidden" name="csrf" value="<?= e($tok) ?>">
-                <input type="hidden" name="command" value="reset_boss">
-                <button type="submit" class="btn">🐉 Reset boss</button>
+                <input type="hidden" name="do" value="notify">
+                <label>Gửi thông báo in-game tới tất cả</label>
+                <input type="text" name="notify_text" placeholder="Nội dung..." required>
+                <button type="submit">Gửi thông báo</button>
             </form>
-            <form method="post" onsubmit="return confirm('RESET bảng xếp hạng? Không hoàn tác!')" style="margin-top:10px">
-                <input type="hidden" name="csrf" value="<?= e($tok) ?>">
-                <input type="hidden" name="command" value="reset_rank">
-                <button type="submit" class="btn danger">🏆 Reset bảng xếp hạng</button>
-            </form>
-            <form method="post" onsubmit="return confirm('BẬT BẢO TRÌ? Server sẽ đóng sau khi đếm ngược.')" style="margin-top:10px">
-                <input type="hidden" name="csrf" value="<?= e($tok) ?>">
-                <input type="hidden" name="command" value="maintenance">
-                <input type="number" name="params" value="60" min="0" style="width:90px" title="giây đếm ngược">
-                <button type="submit" class="btn danger">🔧 Bật bảo trì (giây)</button>
-            </form>
-            <form method="post" onsubmit="return confirm('KHỞI ĐỘNG LẠI server ngay?')" style="margin-top:10px">
-                <input type="hidden" name="csrf" value="<?= e($tok) ?>">
-                <input type="hidden" name="command" value="restart">
-                <button type="submit" class="btn danger">♻️ Restart server</button>
-            </form>
+            <hr style="border-color:var(--line);margin:14px 0">
+            <div class="actions">
+                <form method="post" onsubmit="return confirm('Reset boss?')">
+                    <input type="hidden" name="csrf" value="<?= e($tok) ?>"><input type="hidden" name="do" value="do_reset_boss">
+                    <button class="btn">🐉 Reset boss</button>
+                </form>
+                <form method="post" onsubmit="return confirm('RESET bảng xếp hạng? Không hoàn tác!')">
+                    <input type="hidden" name="csrf" value="<?= e($tok) ?>"><input type="hidden" name="do" value="do_reset_rank">
+                    <button class="btn danger">🏆 Reset BXH</button>
+                </form>
+                <form method="post" onsubmit="return confirm('KHỞI ĐỘNG LẠI server?')">
+                    <input type="hidden" name="csrf" value="<?= e($tok) ?>"><input type="hidden" name="do" value="do_restart">
+                    <button class="btn danger">♻️ Restart</button>
+                </form>
+            </div>
         </div>
     </div>
-
-    <h2>Lịch sử lệnh</h2>
-    <div class="tablewrap">
-    <table>
-    <thead><tr><th>ID</th><th>Lệnh</th><th>Tham số</th><th>Trạng thái</th><th>Kết quả</th><th>Admin</th><th>Lúc</th></tr></thead>
-    <tbody>
-    <?php if (!$history): ?><tr><td colspan="7" class="empty">Chưa có lệnh nào.</td></tr>
-    <?php else: foreach ($history as $h):
-        $st = (int)$h['status'];
-        $stTag = $st === 1 ? ['on','Xong'] : ($st === 0 ? ['off','Chờ'] : ['ban','Lỗi']);
-    ?>
-        <tr>
-            <td><?= (int)$h['id'] ?></td>
-            <td class="mono"><?= e($h['command']) ?></td>
-            <td class="dim"><?= e(mb_strimwidth((string)$h['params'], 0, 30, '…')) ?></td>
-            <td><span class="tag <?= $stTag[0] ?>"><?= $stTag[1] ?></span></td>
-            <td class="dim"><?= e(mb_strimwidth((string)$h['result'], 0, 40, '…')) ?></td>
-            <td class="dim"><?= e($h['created_by']) ?></td>
-            <td class="dim"><?= e($h['created_at']) ?></td>
-        </tr>
-    <?php endforeach; endif; ?>
-    </tbody>
-    </table>
-    </div>
-    <p class="dim">Lệnh được đưa vào hàng đợi; server đọc & xử lý mỗi ~3 giây rồi ghi kết quả. Trạng thái ở trên lấy trực tiếp từ server (heartbeat).</p>
+    <p class="dim">Server đọc bảng <code>server_config</code> mỗi ~3 giây và tự áp dụng. Bạn chỉ cần chỉnh giá trị & lưu — không cần "gửi lệnh". Bật/tắt sự kiện ở trang <a href="events.php">Sự kiện</a>.</p>
 <?php endif; ?>
 <?php require_once __DIR__ . '/footer.php'; ?>

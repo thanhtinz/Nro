@@ -5,7 +5,6 @@ require_once __DIR__ . '/config.php';
 require_admin();
 $c = db();
 
-// Nhãn tiếng Việt cho từng sự kiện (khớp key trong EventManager)
 $EVENTS = [
     'LUNNAR_NEW_YEAR'          => 'Tết Nguyên Đán',
     'INTERNATIONAL_WOMANS_DAY' => 'Quốc tế Phụ nữ 8/3',
@@ -19,7 +18,7 @@ $EVENTS = [
 function bridge_ready(mysqli $c): bool
 {
     $r = $c->query("SELECT 1 FROM information_schema.tables
-                     WHERE table_schema = DATABASE() AND table_name = 'server_control' LIMIT 1");
+                     WHERE table_schema = DATABASE() AND table_name = 'server_config' LIMIT 1");
     return $r && $r->num_rows > 0;
 }
 $ready = bridge_ready($c);
@@ -31,28 +30,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $ready) {
     if (!isset($EVENTS[$key])) {
         flash('Sự kiện không hợp lệ.');
     } else {
-        $params = $key . ':' . $on;
-        $by = $_SESSION['admin_username'] ?? '';
-        $cmd = 'event_toggle';
-        $stmt = $c->prepare('INSERT INTO server_control (command, params, created_by) VALUES (?,?,?)');
-        $stmt->bind_param('sss', $cmd, $params, $by);
+        $cfgKey = 'event_' . $key;
+        $stmt = $c->prepare('INSERT INTO server_config (cfg_key, cfg_value) VALUES (?, ?)
+                             ON DUPLICATE KEY UPDATE cfg_value = VALUES(cfg_value)');
+        $stmt->bind_param('ss', $cfgKey, $on);
         $stmt->execute(); $stmt->close();
-        flash('Đã gửi lệnh ' . ($on === '1' ? 'BẬT' : 'TẮT') . ' "' . $EVENTS[$key] . '". Server sẽ áp dụng trong ít giây.');
+        flash('Đã ' . ($on === '1' ? 'BẬT' : 'TẮT') . ' "' . $EVENTS[$key] . '". Server tự áp dụng trong ít giây.');
     }
     header('Location: events.php'); exit();
 }
 
-// Đọc trạng thái sự kiện từ server_status.events ("KEY:1,KEY2:0,...")
-$states = [];
-$hb = 0;
+// Trạng thái mong muốn (config) + trạng thái thực tế từ server (status)
+$cfg = []; $live = []; $hb = 0;
 if ($ready) {
+    $r = $c->query("SELECT cfg_key, cfg_value FROM server_config WHERE cfg_key LIKE 'event_%'");
+    if ($r) foreach ($r->fetch_all(MYSQLI_ASSOC) as $row) $cfg[substr($row['cfg_key'], 6)] = $row['cfg_value'] === '1';
     $r = $c->query("SELECT sv_key, sv_value FROM server_status WHERE sv_key IN ('events','last_heartbeat')");
     if ($r) foreach ($r->fetch_all(MYSQLI_ASSOC) as $row) {
         if ($row['sv_key'] === 'last_heartbeat') $hb = (int)$row['sv_value'];
         if ($row['sv_key'] === 'events') {
             foreach (explode(',', (string)$row['sv_value']) as $pair) {
                 $kv = explode(':', $pair);
-                if (count($kv) === 2) $states[trim($kv[0])] = trim($kv[1]) === '1';
+                if (count($kv) === 2) $live[trim($kv[0])] = trim($kv[1]) === '1';
             }
         }
     }
@@ -65,42 +64,35 @@ $tok = csrf_token();
 <h1>Quản lý sự kiện in-game</h1>
 
 <?php if (!$ready): ?>
-    <div class="note" style="border-left-color:var(--danger)">
-        Chưa cài cầu nối server. Xem <code>docs/PHASE2_SERVER_BRIDGE.md</code> (chạy <code>bridge.sql</code>,
-        gắn <code>WebControlService.gI();</code>, build lại server).
-    </div>
+    <div class="note" style="border-left-color:var(--danger)">Chưa cài cầu nối. Xem <code>docs/PHASE2_SERVER_BRIDGE.md</code>.</div>
 <?php else: ?>
     <?php if (!$svOnline): ?>
-        <div class="note" style="border-left-color:var(--warn)">
-            Server chưa gửi heartbeat gần đây — trạng thái bên dưới có thể cũ. Lệnh gửi đi sẽ chờ tới khi server chạy.
-        </div>
+        <div class="note" style="border-left-color:var(--warn)">Server chưa gửi heartbeat — cột "Thực tế" có thể trống. Chỉnh vẫn lưu, server áp dụng khi chạy.</div>
     <?php endif; ?>
-
     <div class="tablewrap">
     <table>
-    <thead><tr><th>Sự kiện</th><th>Trạng thái hiện tại</th><th>Thao tác</th></tr></thead>
+    <thead><tr><th>Sự kiện</th><th>Cài đặt</th><th>Thực tế (từ sv)</th><th>Thao tác</th></tr></thead>
     <tbody>
     <?php foreach ($EVENTS as $key => $label):
-        $known = array_key_exists($key, $states);
-        $isOn = $states[$key] ?? false;
+        $want = $cfg[$key] ?? true;
+        $liveOn = $live[$key] ?? null;
     ?>
         <tr>
             <td><b><?= e($label) ?></b> <span class="dim mono"><?= e($key) ?></span></td>
+            <td><?= $want ? '<span class="tag on">BẬT</span>' : '<span class="tag ban">TẮT</span>' ?></td>
             <td>
-                <?php if (!$known): ?><span class="tag off">?</span>
-                <?php elseif ($isOn): ?><span class="tag on">Đang BẬT</span>
+                <?php if ($liveOn === null): ?><span class="dim">—</span>
+                <?php elseif ($liveOn): ?><span class="tag on">Đang BẬT</span>
                 <?php else: ?><span class="tag ban">Đang TẮT</span><?php endif; ?>
             </td>
             <td class="actions">
                 <form method="post">
                     <input type="hidden" name="csrf" value="<?= e($tok) ?>">
                     <input type="hidden" name="key" value="<?= e($key) ?>">
-                    <?php if ($isOn): ?>
-                        <input type="hidden" name="on" value="0">
-                        <button class="btn danger">Tắt</button>
+                    <?php if ($want): ?>
+                        <input type="hidden" name="on" value="0"><button class="btn danger">Tắt</button>
                     <?php else: ?>
-                        <input type="hidden" name="on" value="1">
-                        <button class="btn ok">Bật</button>
+                        <input type="hidden" name="on" value="1"><button class="btn ok">Bật</button>
                     <?php endif; ?>
                 </form>
             </td>
@@ -109,6 +101,6 @@ $tok = csrf_token();
     </tbody>
     </table>
     </div>
-    <p class="dim">Trạng thái lấy trực tiếp từ server (heartbeat). Bật/tắt gửi lệnh vào hàng đợi, server áp dụng sau ~3 giây (áp dụng cho phiên chạy hiện tại; khởi động lại server sẽ về mặc định trong code).</p>
+    <p class="dim">"Cài đặt" là trạng thái bạn chọn (lưu ở <code>server_config</code>); "Thực tế" là trạng thái server đang chạy (heartbeat). Server tự đồng bộ trong ít giây.</p>
 <?php endif; ?>
 <?php require_once __DIR__ . '/footer.php'; ?>

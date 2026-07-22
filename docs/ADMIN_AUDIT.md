@@ -21,15 +21,13 @@ Cập nhật theo tiến độ. ✅ = đã có trong panel, ⏳ = cần làm th�
 - ⏳ Tab/Item trong shop (`tab_shop`, `item_shop`, `item_shop_option`) — quan hệ lồng nhau
 - ⏳ Nhiệm vụ phụ (`side_task_template`), danh hiệu nhiệm vụ (`task_badges_template`)
 
-## Điều khiển server (runtime — qua cầu nối)
-- ✅ Thông báo in-game tới tất cả (`notify_all`)
-- ✅ Hệ số EXP (`set_exp`)
-- ✅ Reset boss (`reset_boss`)
-- ✅ Reset bảng xếp hạng (`reset_rank`)
-- ✅ Bảo trì (`maintenance`)
-- ✅ Restart server (`restart`)
-- ✅ Bật/tắt sự kiện (`event_toggle`): Tết, 8/3, Giáng Sinh, Halloween, Hùng Vương, Trung Thu, Top Up
-- ✅ Trạng thái sống: online, uptime, EXP, bảo trì, heartbeat
+## Điều khiển server (runtime — config-sync, chỉnh là server tự áp dụng)
+- ✅ Hệ số EXP (`rate_exp`) — chỉnh giá trị
+- ✅ Bảo trì (`maintenance`) — bật/tắt
+- ✅ Bật/tắt sự kiện (`event_*`): Tết, 8/3, Giáng Sinh, Halloween, Hùng Vương, Trung Thu, Top Up
+- ✅ Thông báo in-game tới tất cả (hành động)
+- ✅ Reset boss / Reset BXH / Restart (hành động 1 lần)
+- ✅ Trạng thái sống: online, uptime, EXP, bảo trì, sự kiện, heartbeat
 
 ## Còn thiếu / cần thiết kế thêm
 - ⏳ **Phúc lợi / điểm danh (daily gift)**: hiện **hardcode trong code** (`ConstDailyGift`, `DailyGiftService`), không có bảng DB → muốn quản lý web cần **thêm bảng `daily_gift` + sửa server đọc từ bảng**.

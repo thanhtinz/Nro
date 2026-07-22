@@ -1,33 +1,42 @@
 -- ============================================================
--- Bảng cầu nối Web Admin <-> Server game (Phase 2)
+-- Cầu nối Web Admin <-> Server game (mô hình config-sync)
+-- Admin chỉ CHỈNH giá trị trong server_config; server tự đọc & áp dụng.
 -- Chạy 1 lần trên DB game (team2026).
 -- ============================================================
 
--- Hàng đợi lệnh: web ghi, server đọc & thực thi
-CREATE TABLE IF NOT EXISTS `server_control` (
-  `id`           INT(11) NOT NULL AUTO_INCREMENT,
-  `command`      VARCHAR(50)  NOT NULL,          -- maintenance, restart, set_exp, reset_boss, reset_rank, notify_all
-  `params`       VARCHAR(500) DEFAULT NULL,      -- tham số (vd giá trị exp, nội dung thông báo)
-  `status`       TINYINT(1)   NOT NULL DEFAULT 0,-- 0=chờ, 1=xong, 2=lỗi
-  `result`       VARCHAR(500) DEFAULT NULL,      -- server ghi kết quả
-  `created_by`   VARCHAR(50)  DEFAULT NULL,      -- admin đã gửi
-  `created_at`   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `processed_at` TIMESTAMP    NULL DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `idx_status` (`status`)
+-- Cấu hình runtime: admin ghi, server đọc & áp dụng liên tục
+CREATE TABLE IF NOT EXISTS `server_config` (
+  `cfg_key`    VARCHAR(50)  NOT NULL,
+  `cfg_value`  VARCHAR(500) DEFAULT NULL,
+  `updated_at` TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`cfg_key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Trạng thái sống của server (server ghi định kỳ, web đọc để hiển thị "từ sv")
+-- Trạng thái sống của server (server ghi, web đọc hiển thị)
 CREATE TABLE IF NOT EXISTS `server_status` (
-  `sv_key`     VARCHAR(50)  NOT NULL,            -- online_players, uptime, rate_exp, maintenance, last_heartbeat
+  `sv_key`     VARCHAR(50)  NOT NULL,
   `sv_value`   VARCHAR(500) DEFAULT NULL,
   `updated_at` TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`sv_key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-INSERT IGNORE INTO `server_status` (`sv_key`, `sv_value`) VALUES
-  ('online_players', '0'),
+-- Giá trị mặc định (setting = trạng thái mong muốn; do_* = kích hoạt 1 lần)
+INSERT IGNORE INTO `server_config` (`cfg_key`, `cfg_value`) VALUES
   ('rate_exp', '1'),
   ('maintenance', '0'),
-  ('last_heartbeat', '0'),
-  ('uptime', '0');
+  ('event_LUNNAR_NEW_YEAR', '1'),
+  ('event_INTERNATIONAL_WOMANS_DAY', '1'),
+  ('event_CHRISTMAS', '1'),
+  ('event_HALLOWEEN', '1'),
+  ('event_HUNG_VUONG', '1'),
+  ('event_TRUNG_THU', '1'),
+  ('event_TOP_UP', '1'),
+  ('notify_text', ''),
+  ('notify_seq', '0'),
+  ('do_reset_boss', '0'),
+  ('do_reset_rank', '0'),
+  ('do_restart', '0');
+
+INSERT IGNORE INTO `server_status` (`sv_key`, `sv_value`) VALUES
+  ('online_players', '0'), ('rate_exp', '1'), ('maintenance', '0'),
+  ('last_heartbeat', '0'), ('uptime', '0'), ('events', '');
