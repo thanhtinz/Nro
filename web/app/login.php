@@ -113,8 +113,7 @@
                                 <div id="loginMessage" class="message" style="display:none;"></div>
 								<button type="submit" class="w3-button w3-red" value="Đăng nhập" id="button1" name="submit">Đăng nhập</button><br />
 								<div style="font-size:10px;">
-									(Đăng kí game ở dưới)<br>
-									<a href="register">Đăng Ký</a>
+									Tài khoản được tạo <b>trong game</b> khi đăng nhập lần đầu.
 								</div>
 							</form><br>
 						</center>

@@ -1,189 +1,28 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE html PUBLIC "-//WAPFORUM//DTD XHTML Mobile 1.0//EN" "http://www.wapforum.org/DTD/xhtml-mobile10.dtd">
-<html>
+<?php
+// Đăng ký trên web đã tắt — chỉ đăng ký trong game.
+if (session_status() === PHP_SESSION_NONE) session_start();
+?><!DOCTYPE html>
+<html lang="vi">
 <head>
-	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-	<title>Chào mừng bạn đến với Chú Bé Rồng Online - Đăng Ký Tài Khoản</title>
-	<link rel="stylesheet" href="https://forum.ngocrongonline.com/app/view/css/StyleSheet.css" type="text/css" />
-	<link rel="stylesheet" href="https://forum.ngocrongonline.com/app/view/css/template.css" type="text/css" />
-	<script src="/view/static/js/disable_devtools.js"></script>
-	<link rel="shortcut icon" href='https://forum.ngocrongonline.com/app/view/images/favicon.png' type="image/x-icon" />
-	<script type="text/javascript">
-		var _gaq = _gaq || [];
-		_gaq.push(['_setAccount', 'UA-22738816-4']);
-		_gaq.push(['_setDomainName', '.teamobi.com']);
-		_gaq.push(['_trackPageview']);
-
-		(function() {
-			var ga = document.createElement('script');
-			ga.type = 'text/javascript';
-			ga.async = true;
-			ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-			var s = document.getElementsByTagName('script')[0];
-			s.parentNode.insertBefore(ga, s);
-		})();
-	</script>
-	<link rel="stylesheet" href="https://forum.ngocrongonline.com/app/view/css/w3.css">
-</head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Đăng ký trong game - Ngọc Rồng Online</title>
 <style>
-		.snowEffect {
-			position: fixed;
-			width: 100%;
-			height: 100%;
-			left: 0;
-			top: 0;
-			z-index: 99;
-			overflow: hidden;
-			pointer-events: none;
-		}
-
-		#snowcanvas {
-			position: fixed;
-			z-index: 0;
-		}
-
-        /* Thêm CSS cho thông báo */
-        .message {
-            margin-top: 10px;
-            padding: 10px;
-            border-radius: 5px;
-            font-weight: bold;
-        }
-        .message.success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        .message.error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
+body{margin:0;font-family:system-ui,Arial,sans-serif;background:#1a0f0a;color:#fff;
+    display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center}
+.card{background:#2a1a10;border:1px solid #5a3a20;border-radius:14px;padding:32px 26px;max-width:360px;margin:16px}
+h1{color:#ff7a45;font-size:20px;margin:0 0 12px}
+p{color:#e6d8cc;line-height:1.6}
+a.btn{display:inline-block;margin-top:18px;background:#ff5601;color:#fff;text-decoration:none;
+    padding:10px 20px;border-radius:8px;font-weight:600}
 </style>
+</head>
 <body>
-<div class="snowEffect">
-	<canvas id="snowcanvas" height="100%" width="100%"></canvas>
+<div class="card">
+    <h1>Đăng ký trong game</h1>
+    <p>Việc tạo tài khoản chỉ thực hiện <b>trong game</b>: tải game, nhập tên tài khoản và mật khẩu ở màn hình đăng nhập lần đầu — hệ thống sẽ tự tạo tài khoản cho bạn.</p>
+    <p>Website không còn hỗ trợ đăng ký.</p>
+    <a class="btn" href="/app/login">← Về trang đăng nhập</a>
 </div>
-<div class="body_body">
-	<div class="left_top"></div>
-	<div class="bg_top">
-		<div class="right_top"></div>
-	</div>
-	<div class="body-content">
-		<div class="a" align="center"><img src="/images/logo_sk_he.png" height="90"/></div>
-		<div id="top">
-			<div class="link-more">
-				<div class="h" align="center">
-					<div class="bg_tree"></div>
-					<div class="bg_noel"></div>
-					<div class="menu2" style="background: #561d00;">
-						<table width="100%" border="0" cellspacing="4">
-							<tr class="menu">
-								<td><a href="http://103.162.30.23">Trang Chủ</a></td>
-								<td id="selected"><a href="https://103.162.30.23/forum">Diễn Đàn</a></td>
-							</tr>
-						</table>
-					</div>
-					<div class="body" style="text-align:center">
-						<div style="font-size:10px;">Đăng ký tài khoản Chú Bé Rồng Online mới.</div>
-						<center>
-							<form id="registerForm" method="POST" name="register">
-                                <input type="hidden" name="action" value="register" />
-                                <input type="hidden" name="keySig" value="a511129a7ce15460414e6fe318eebc2b" />
-								<input type="hidden" name="nav" value="" readonly="readonly" />
-								<table>
-									<tr>
-										<td colspan=2><label for="user">Tài Khoản:</label></td>
-										<td colspan=2><input name="user" type="text" value="" required /></td>
-									</tr>
-									<tr>
-										<td colspan=2><label for="pass">Mật khẩu:</label></td>
-										<td colspan=2><input name="pass" type="password" value="" required /></td>
-									</tr>
-                                    <tr>
-										<td colspan=2><label for="repass">Nhập lại:</label></td>
-										<td colspan=2><input name="repass" type="password" value="" required /></td>
-									</tr>
-								</table>
-								<table>
-									<tr>
-										<td>
-											<input type="radio" name="server" value="1" required /> Server 1 sao
-										</td>
-									</tr>
-								</table>
-                                <div id="registerMessage" class="message" style="display:none;"></div>
-								<button type="submit" class="w3-button w3-red" value="Đăng Ký" id="button1" name="submit">Đăng Ký</button><br />
-								<div style="font-size:10px;">
-									(Đã có tài khoản?)<br>
-									<a href="login">Đăng Nhập</a>
-								</div>
-							</form><br>
-						</center>
-					</div>
-				</div>
-				<br>
-			</div><br>
-		</div>
-	</div>
-	<div class="left_b_bottom">
-		<div class="right_b_bottom">
-			<div class="footer">
-				<div class="left_bottom"></div>
-				<div class="right_bottom"></div>
-			</div>
-		</div>
-	</div>
-	<div class="copyright"><br><b>Bản quyền thuộc về Chú Bé Rồng Online - 2013</b></div>
-</div>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js" type="text/javascript"></script>
-<script type="text/javascript">
-$(document).ready(function() {
-    $('#registerForm').submit(function(e) {
-        e.preventDefault(); // Ngăn chặn form submit theo cách thông thường
-
-        var form = $(this);
-        // Đảm bảo URL này khớp với tên file PHP của bạn
-        // Nếu file PHP của bạn là "auth_process.php", hãy đổi thành 'auth_process.php'
-        var url = 'register_process.php'; 
-
-        $.ajax({
-            type: "POST",
-            url: url,
-            data: form.serialize(), // Gửi tất cả dữ liệu từ form
-            dataType: "json", // Mong đợi phản hồi JSON từ server
-            success: function(response) {
-                var messageDiv = $('#registerMessage');
-                messageDiv.css('display', 'block'); // Hiển thị div thông báo
-                messageDiv.removeClass('success error'); // Xóa các class cũ
-
-                if (response.status === 'success') {
-                    messageDiv.addClass('success');
-                    messageDiv.text(response.message);
-                    if (response.redirect) {
-                        setTimeout(function() {
-                            window.location.href = response.redirect; // Chuyển hướng sau 1.5 giây
-                        }, 1500);
-                    }
-                } else {
-                    messageDiv.addClass('error');
-                    messageDiv.text(response.message);
-                }
-            },
-            error: function(jqXHR, textStatus, errorThrown) {
-                console.error("AJAX Error: ", textStatus, errorThrown, jqXHR.responseText);
-                var messageDiv = $('#registerMessage');
-                messageDiv.css('display', 'block');
-                messageDiv.addClass('error');
-                messageDiv.text('Đã xảy ra lỗi kết nối. Vui lòng thử lại sau. (Mã lỗi: ' + jqXHR.status + ')');
-            }
-        });
-    });
-});
-</script>
-
-<script src="https://ngocrongonline.com/view/static/js/ThreeCanvas.js" type="text/javascript"></script>
-<script src="https://ngocrongonline.com/view/static/js/Snow3d.js" type="text/javascript"></script>
-<script src="https://ngocrongonline.com/view/static/js/animation.js?v4" type="text/javascript"></script>
-<script src="/cdn-cgi/scripts/7d0fa10a/cloudflare-static/rocket-loader.min.js" data-cf-settings="57d9dd0f2fd997a3f6dac1b9-|49" defer></script></body>
+</body>
 </html>

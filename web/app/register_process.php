@@ -25,6 +25,9 @@ try {
     exit();
 }
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'register') {
+    // Đăng ký trên web đã tắt — chỉ đăng ký trong game.
+    echo json_encode(['status' => 'error', 'message' => 'Đăng ký tài khoản chỉ thực hiện trong game. Vui lòng tải game và tạo tài khoản khi đăng nhập lần đầu.']);
+    exit();
     $username = trim($_POST['user'] ?? '');
     $password = $_POST['pass'] ?? '';
     $rePassword = $_POST['repass'] ?? '';
