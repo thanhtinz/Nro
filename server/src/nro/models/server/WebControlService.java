@@ -3,6 +3,8 @@ package nro.models.server;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.HashMap;
+import java.util.Map;
 import nro.models.data.LocalManager;
 import nro.models.boss.Boss_Manager.BossManager;
 import nro.models.services.Service;
@@ -10,15 +12,16 @@ import nro.models.event.EventManager;
 import nro.models.utils.Logger;
 
 /**
- * Cầu nối Web Admin -> Server game.
+ * Đồng bộ cấu hình Web Admin -> Server game (config-sync).
  *
- * - Đọc hàng đợi lệnh ở bảng `server_control` (do web admin ghi) và thực thi.
- * - Ghi trạng thái sống của server vào bảng `server_status` để web hiển thị.
+ * Admin chỉ CHỈNH giá trị trong bảng `server_config`; luồng này đọc mỗi vài giây
+ * và ÁP DỤNG ngay vào server đang chạy (không cần "gửi lệnh"):
+ *   - setting (rate_exp, maintenance, event_*): đặt = trạng thái mong muốn.
+ *   - do_* / notify_seq: giá trị tăng dần (timestamp) để kích hoạt hành động 1 lần.
+ * Đồng thời ghi trạng thái sống vào `server_status` để web hiển thị.
  *
- * Cách gắn: gọi WebControlService.gI(); một lần khi server khởi động
- * (ví dụ trong ServerManager.init()). Nhớ chạy web/admin/sql/bridge.sql trước.
- *
- * Chu kỳ mặc định 3 giây.
+ * Cách gắn: gọi WebControlService.gI(); một lần trong ServerManager.init().
+ * Nhớ chạy web/admin/sql/bridge.sql trước.
  */
 public class WebControlService extends Thread {
 
@@ -26,10 +29,16 @@ public class WebControlService extends Thread {
     private final long startMillis = System.currentTimeMillis();
     private volatile boolean running = true;
 
-    /** Danh sách sự kiện điều khiển được (khớp biến trong EventManager) */
+    /** Giá trị lần cuối đã xử lý của các khoá kích hoạt (do_*, notify_seq) */
+    private final Map<String, String> lastSeen = new HashMap<>();
+    private boolean initialized = false;
+
     private static final String[] EVENTS = {
         "LUNNAR_NEW_YEAR", "INTERNATIONAL_WOMANS_DAY", "CHRISTMAS",
         "HALLOWEEN", "HUNG_VUONG", "TRUNG_THU", "TOP_UP"
+    };
+    private static final String[] TRIGGERS = {
+        "do_reset_boss", "do_reset_rank", "do_restart", "notify_seq"
     };
 
     private WebControlService() {
@@ -50,11 +59,13 @@ public class WebControlService extends Thread {
 
     @Override
     public void run() {
-        Logger.success("WebControlService started (cầu nối web admin)\n");
+        Logger.success("WebControlService started (config-sync web admin)\n");
         while (running) {
             try {
+                Map<String, String> cfg = readConfig();
+                applySettings(cfg);
+                applyTriggers(cfg);
                 writeStatus();
-                processCommands();
             } catch (Exception e) {
                 Logger.error("WebControlService loop error: " + e.getMessage() + "\n");
             }
@@ -65,13 +76,96 @@ public class WebControlService extends Thread {
         }
     }
 
-    /** Ghi trạng thái sống của server vào bảng server_status */
+    private Map<String, String> readConfig() throws Exception {
+        Map<String, String> cfg = new HashMap<>();
+        try (Connection con = LocalManager.getConnection();
+             PreparedStatement ps = con.prepareStatement("SELECT cfg_key, cfg_value FROM server_config");
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                cfg.put(rs.getString("cfg_key"), rs.getString("cfg_value"));
+            }
+        }
+        return cfg;
+    }
+
+    /** Áp dụng các cấu hình trạng thái (idempotent) */
+    private void applySettings(Map<String, String> cfg) {
+        // Hệ số EXP
+        String exp = cfg.get("rate_exp");
+        if (exp != null) {
+            try {
+                int v = Integer.parseInt(exp.trim());
+                if (v < 1) v = 1; if (v > 127) v = 127;
+                Manager.RATE_EXP_SERVER = (byte) v;
+            } catch (NumberFormatException ignored) {}
+        }
+        // Sự kiện
+        for (String ev : EVENTS) {
+            String val = cfg.get("event_" + ev);
+            if (val != null) setEvent(ev, val.trim().equals("1"));
+        }
+        // Bảo trì: đặt 1 -> bắt đầu bảo trì (nếu chưa chạy)
+        String mt = cfg.get("maintenance");
+        if (mt != null && mt.trim().equals("1") && !Maintenance.isRunning) {
+            Maintenance.gI().startSeconds(60);
+        }
+    }
+
+    /** Xử lý các khoá kích hoạt 1 lần (khi giá trị thay đổi so với lần trước) */
+    private void applyTriggers(Map<String, String> cfg) {
+        // Lần đầu: ghi nhận giá trị hiện tại, KHÔNG kích hoạt (tránh chạy lại khi server khởi động)
+        if (!initialized) {
+            for (String k : TRIGGERS) lastSeen.put(k, cfg.getOrDefault(k, "0"));
+            initialized = true;
+            return;
+        }
+        for (String key : TRIGGERS) {
+            String cur = cfg.getOrDefault(key, "0");
+            String prev = lastSeen.getOrDefault(key, "0");
+            if (cur != null && !cur.equals(prev)) {
+                lastSeen.put(key, cur);
+                try {
+                    fireTrigger(key, cfg);
+                } catch (Exception ex) {
+                    Logger.error("Trigger " + key + " lỗi: " + ex.getMessage() + "\n");
+                }
+            }
+        }
+    }
+
+    private void fireTrigger(String key, Map<String, String> cfg) throws Exception {
+        switch (key) {
+            case "do_reset_boss":
+                BossManager.gI().loadBoss();
+                Logger.success("[WebAdmin] Reset boss\n");
+                break;
+            case "do_reset_rank":
+                resetRank();
+                Logger.success("[WebAdmin] Reset bảng xếp hạng\n");
+                break;
+            case "do_restart":
+                new Thread(() -> {
+                    try { Thread.sleep(1500); } catch (InterruptedException ignored) {}
+                    ServerManager.gI().close();
+                }).start();
+                Logger.success("[WebAdmin] Restart server\n");
+                break;
+            case "notify_seq":
+                String text = cfg.getOrDefault("notify_text", "");
+                if (text != null && !text.isEmpty()) {
+                    Service.gI().sendThongBaoAllPlayer(text);
+                    Logger.success("[WebAdmin] Thông báo: " + text + "\n");
+                }
+                break;
+        }
+    }
+
+    /** Ghi trạng thái sống của server */
     private void writeStatus() throws Exception {
         int online = ServerManager.CLIENTS.size();
         long uptime = (System.currentTimeMillis() - startMillis) / 1000L;
         int maintenance = Maintenance.isRunning ? 1 : 0;
         int rateExp = Manager.RATE_EXP_SERVER;
-
         try (Connection con = LocalManager.getConnection()) {
             setStatus(con, "online_players", String.valueOf(online));
             setStatus(con, "uptime", String.valueOf(uptime));
@@ -82,7 +176,16 @@ public class WebControlService extends Thread {
         }
     }
 
-    /** Trạng thái các sự kiện dạng "KEY:1,KEY2:0,..." để web đọc */
+    private void setStatus(Connection con, String key, String value) throws Exception {
+        try (PreparedStatement ps = con.prepareStatement(
+                "INSERT INTO server_status (sv_key, sv_value) VALUES (?, ?) "
+                + "ON DUPLICATE KEY UPDATE sv_value = VALUES(sv_value)")) {
+            ps.setString(1, key);
+            ps.setString(2, value);
+            ps.executeUpdate();
+        }
+    }
+
     private String eventStates() {
         StringBuilder sb = new StringBuilder();
         for (String ev : EVENTS) {
@@ -90,6 +193,13 @@ public class WebControlService extends Thread {
             sb.append(ev).append(':').append(getEvent(ev) ? '1' : '0');
         }
         return sb.toString();
+    }
+
+    private int resetRank() throws Exception {
+        try (Connection con = LocalManager.getConnection();
+             PreparedStatement ps = con.prepareStatement("DELETE FROM super_rank")) {
+            return ps.executeUpdate();
+        }
     }
 
     private boolean getEvent(String key) {
@@ -105,118 +215,15 @@ public class WebControlService extends Thread {
         }
     }
 
-    private boolean setEvent(String key, boolean on) {
+    private void setEvent(String key, boolean on) {
         switch (key) {
-            case "LUNNAR_NEW_YEAR": EventManager.LUNNAR_NEW_YEAR = on; return true;
-            case "INTERNATIONAL_WOMANS_DAY": EventManager.INTERNATIONAL_WOMANS_DAY = on; return true;
-            case "CHRISTMAS": EventManager.CHRISTMAS = on; return true;
-            case "HALLOWEEN": EventManager.HALLOWEEN = on; return true;
-            case "HUNG_VUONG": EventManager.HUNG_VUONG = on; return true;
-            case "TRUNG_THU": EventManager.TRUNG_THU = on; return true;
-            case "TOP_UP": EventManager.TOP_UP = on; return true;
-            default: return false;
-        }
-    }
-
-    private void setStatus(Connection con, String key, String value) throws Exception {
-        try (PreparedStatement ps = con.prepareStatement(
-                "INSERT INTO server_status (sv_key, sv_value) VALUES (?, ?) "
-                + "ON DUPLICATE KEY UPDATE sv_value = VALUES(sv_value)")) {
-            ps.setString(1, key);
-            ps.setString(2, value);
-            ps.executeUpdate();
-        }
-    }
-
-    /** Đọc & thực thi các lệnh đang chờ */
-    private void processCommands() throws Exception {
-        try (Connection con = LocalManager.getConnection();
-             PreparedStatement ps = con.prepareStatement(
-                     "SELECT id, command, params FROM server_control WHERE status = 0 ORDER BY id ASC LIMIT 20");
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                int id = rs.getInt("id");
-                String cmd = rs.getString("command");
-                String params = rs.getString("params");
-                String result;
-                int status = 1;
-                try {
-                    result = execute(cmd, params);
-                } catch (Exception ex) {
-                    result = "Lỗi: " + ex.getMessage();
-                    status = 2;
-                }
-                markDone(con, id, status, result);
-            }
-        }
-    }
-
-    private void markDone(Connection con, int id, int status, String result) throws Exception {
-        try (PreparedStatement ps = con.prepareStatement(
-                "UPDATE server_control SET status = ?, result = ?, processed_at = NOW() WHERE id = ?")) {
-            ps.setInt(1, status);
-            ps.setString(2, result != null && result.length() > 500 ? result.substring(0, 500) : result);
-            ps.setInt(3, id);
-            ps.executeUpdate();
-        }
-    }
-
-    /** Ánh xạ lệnh -> hành động trong server */
-    private String execute(String cmd, String params) throws Exception {
-        if (cmd == null) return "Lệnh rỗng";
-        switch (cmd) {
-            case "notify_all": {
-                String text = params == null ? "" : params;
-                Service.gI().sendThongBaoAllPlayer(text);
-                return "Đã gửi thông báo tới tất cả người chơi";
-            }
-            case "set_exp": {
-                int val = Integer.parseInt(params.trim());
-                if (val < 1) val = 1;
-                if (val > 127) val = 127;
-                Manager.RATE_EXP_SERVER = (byte) val;
-                return "Đã đặt hệ số EXP = " + val;
-            }
-            case "reset_boss": {
-                BossManager.gI().loadBoss();
-                return "Đã nạp lại / reset boss";
-            }
-            case "event_toggle": {
-                // params: "KEY:1" (bật) hoặc "KEY:0" (tắt)
-                String[] p = params == null ? new String[0] : params.split(":");
-                if (p.length < 2) return "Sai tham số (cần KEY:0/1)";
-                String key = p[0].trim();
-                boolean on = p[1].trim().equals("1");
-                if (!setEvent(key, on)) return "Sự kiện không hợp lệ: " + key;
-                return "Đã " + (on ? "bật" : "tắt") + " sự kiện " + key;
-            }
-            case "reset_rank": {
-                int n = resetRank();
-                return "Đã reset bảng xếp hạng (" + n + " dòng)";
-            }
-            case "maintenance": {
-                int seconds = 60;
-                try { if (params != null && !params.isEmpty()) seconds = Integer.parseInt(params.trim()); } catch (Exception ignored) {}
-                Maintenance.gI().startSeconds(seconds);
-                return "Đã bật bảo trì, đếm ngược " + seconds + "s";
-            }
-            case "restart": {
-                new Thread(() -> {
-                    try { Thread.sleep(1500); } catch (InterruptedException ignored) {}
-                    ServerManager.gI().close();
-                }).start();
-                return "Đang khởi động lại server...";
-            }
-            default:
-                return "Không hỗ trợ lệnh: " + cmd;
-        }
-    }
-
-    /** Reset bảng xếp hạng super_rank; trả về số dòng bị xoá */
-    private int resetRank() throws Exception {
-        try (Connection con = LocalManager.getConnection();
-             PreparedStatement ps = con.prepareStatement("DELETE FROM super_rank")) {
-            return ps.executeUpdate();
+            case "LUNNAR_NEW_YEAR": EventManager.LUNNAR_NEW_YEAR = on; break;
+            case "INTERNATIONAL_WOMANS_DAY": EventManager.INTERNATIONAL_WOMANS_DAY = on; break;
+            case "CHRISTMAS": EventManager.CHRISTMAS = on; break;
+            case "HALLOWEEN": EventManager.HALLOWEEN = on; break;
+            case "HUNG_VUONG": EventManager.HUNG_VUONG = on; break;
+            case "TRUNG_THU": EventManager.TRUNG_THU = on; break;
+            case "TOP_UP": EventManager.TOP_UP = on; break;
         }
     }
 }
