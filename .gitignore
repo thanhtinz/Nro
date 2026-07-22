@@ -1,0 +1,46 @@
+# ===== NRO monorepo .gitignore =====
+
+# ---- Java / NetBeans server (server/) ----
+server/build/
+server/dist/
+server/data/
+**/*.class
+*.jar.bak
+# Bản jar build sẵn (không commit, build lại từ src)
+server/20.jar
+server/**/nbproject/private/
+
+# ---- Unity client (client/) ----
+client/Library/
+client/Temp/
+client/Obj/
+client/Build/
+client/Builds/
+client/Logs/
+client/UserSettings/
+client/MemoryCaptures/
+client/[Bb]uild/
+client/*.csproj
+client/*.sln
+client/.vs/
+client/Assets/Scripts/**/.vs/
+
+# ---- Web (web/) ----
+web/**/vendor/
+web/**/node_modules/
+web/**/*.log
+
+# ---- Tài nguyên nặng / bản build (giữ trong Release, không đưa lên git) ----
+*.rar
+*.apk
+*.ipa
+*.7z
+*.zip.part
+
+# ---- OS / editor ----
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.idea/
+*.iml
