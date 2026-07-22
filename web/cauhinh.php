@@ -6,7 +6,7 @@ $_IP = '127.0.0.1'; // IP hiển thị ở phần cuối trang
 $db_host = "localhost";
 $db_user = "root";
 $db_pass = "";
-$db_name = "ngocrong";
+$db_name = "team2026";
 
 // API
 $w_cuphap_momo = 'Mr Blue'; // cú pháp

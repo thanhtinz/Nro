@@ -10,7 +10,7 @@ if (isset($_SESSION['user_id'])) {
 }
 header('Content-Type: application/json');
 $host = 'localhost';
-$dbname = 'ngocrong';
+$dbname = 'team2026';
 $user = 'root';
 $pass = '';
 $pdo = null;
