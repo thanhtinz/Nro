@@ -129,6 +129,15 @@ function log_activity($message, $type = 'info') {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Nạp thẻ cào đã ngừng — chỉ dùng chuyển khoản ngân hàng qua SePay.
+    header('Content-Type: application/json');
+    echo json_encode([
+        'success' => false,
+        'status'  => 'error',
+        'message' => 'Nạp thẻ cào đã ngừng. Vui lòng nạp bằng chuyển khoản ngân hàng (SePay).'
+    ]);
+    exit();
+
     if (!function_exists('verify_csrf_token')) {
         function verify_csrf_token($token) {
             return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);

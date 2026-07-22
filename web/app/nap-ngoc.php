@@ -125,9 +125,6 @@ include_once '../data_nap_the.php';
                                             <a id="tab-login-btn" href="/app/login">
                                                 <button class="w3-button w3-red w3-small w3-hover-green">Đăng nhập</button>
                                             </a>
-                                            <a id="tab-register-btn" href="/app/register">
-                                                <button class="w3-button w3-blue w3-small w3-hover-green">Đăng ký</button>
-                                            </a>
                                         </div>
                                     <?php endif; ?>
                                 </div>
@@ -140,145 +137,11 @@ include_once '../data_nap_the.php';
                                             </tr>
                                         </tbody>
                                     </table>
-                                    <div style="text-align:center; margin-bottom: 20px;">
-                                        <button id="btnCard" class="active-recharge-btn" style="padding: 10px 20px; background-color: #ff5601; color: #fff; border: none; border-radius: 4px; margin-right: 10px;">Nạp Thẻ Cào Tự Động</button>
-                                        <button id="btnTransfer" class="inactive-recharge-btn" style="padding: 10px 20px; background-color: #ccc; color: #000; border: none; border-radius: 4px;">Chuyển Khoản</button>
+                                    <div style="text-align:center; margin: 10px 0 20px;">
+                                        <b style="color:green; font-size:16px;">Nạp bằng chuyển khoản ngân hàng (SePay)</b>
                                     </div>
 
-                                    <div id="cardSection">
-                                        <div class="box_list_chuyenmuc">
-                                            <div class="box_midss">
-                                                <div class="box_detai" style="padding:5px;">
-                                                    <center>
-                                                        <b style="color:red">Vui lòng nhập đầy đủ thông tin</b>
-                                                        <br>
-                                                        <div id="comment_error" style="color:red;"></div>
-                                                    </center>
-                                                    <form id="cardPaymentForm" method="post" action="/Api/Card">
-                                                        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf_token); ?>">
-                                                        <table style="width:100%; max-width:500px; margin:0 auto;">
-                                                            <tbody>
-                                                                <tr>
-                                                                    <td><b>Loại Thẻ</b></td>
-                                                                    <td>
-                                                                        <select id="cardType" name="cardType" style="width:100%; border-radius: 4px; border: 1px solid #CCC; padding: 2px;" required>
-                                                                            <option value="VIETTEL" selected>VIETTEL</option>
-                                                                            <option value="VINAPHONE">VINAPHONE</option>
-                                                                            <option value="MOBIPHONE">MOBIPHONE</option>
-                                                                            <option value="VNMOBI">VNMOBI</option>
-                                                                            <option value="VCOIN">VCOIN</option>
-                                                                            <option value="ZING">ZING</option>
-                                                                            <option value="GATE">GATE</option>
-                                                                            <option value="GARENA">GARENA</option>
-                                                                        </select>
-                                                                    </td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td><b>Số tiền</b></td>
-                                                                    <td>
-                                                                        <select id="amount" style="width:100%; border-radius: 4px; border: 1px solid #CCC; padding: 2px;" name="amount" required>
-                                                                            <option value="">Chọn mệnh giá</option>
-                                                                            <option value="10000">10.000</option>
-                                                                            <option value="20000">20.000</option>
-                                                                            <option value="30000">30.000</option>
-                                                                            <option value="50000">50.000</option>
-                                                                            <option value="100000">100.000</option>
-                                                                            <option value="200000">200.000</option>
-                                                                            <option value="300000">300.000</option>
-                                                                            <option value="500000">500.000</option>
-                                                                            <option value="1000000">1.000.000</option>
-                                                                        </select>
-                                                                    </td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td><b>Mã Thẻ</b></td>
-                                                                    <td><input type="text" id="cardPin" name="cardPin" style="width:100%;" required></td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td><b>Số Seri</b></td>
-                                                                    <td><input type="text" id="cardSerial" name="cardSerial" style="width:100%;" required></td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td></td>
-                                                                    <td style="text-align:center; padding-top:10px;">
-                                                                        <input class="w3-button w3-red" type="submit" value="Xác Nhận">
-                                                                    </td>
-                                                                </tr>
-                                                            </tbody>
-                                                        </table>
-                                                    </form>
-                                                    <br>
-                                                    <hr>
-                                                    <h3>Lịch Sử Nạp Thẻ</h3>
-                                                    <table width="100%" border="1" cellspacing="0" style="width: 100%; border-collapse: collapse; background-color: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);">
-                                                        <thead>
-                                                            <tr style="background-color: #b65d2f; color: white; font-weight: bold;">
-                                                                <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">Thời gian</th>
-                                                                <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">Loại thẻ</th>
-                                                                <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">Mệnh giá khai báo</th>
-                                                                <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">Mệnh giá thực nhận</th>
-                                                                <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">Trạng thái</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            <?php if (!empty($history_card_payments)) : ?>
-                                                                <?php foreach ($history_card_payments as $payment) : ?>
-                                                                    <tr style="transition: 0.3s; cursor: pointer;" onmouseover="this.style.backgroundColor='#f5f5f5'" onmouseout="this.style.backgroundColor='transparent'">
-                                                                        <td style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd; color: black;"><?php echo htmlspecialchars($payment['created_at']); ?></td>
-                                                                        <td style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd; color: black;"><?php echo htmlspecialchars($payment['card_telco']); ?></td>
-                                                                        <td style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd; color: black;"><?php echo number_format($payment['declared_amount'], 0, ',', '.') . ' VNĐ'; ?></td>
-                                                                        <td style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd; color: black;">
-                                                                            <?php
-                                                                            if (strpos($payment['status_text'], 'Thành công') !== false) {
-                                                                                echo number_format($payment['detected_value'], 0, ',', '.') . ' VNĐ';
-                                                                            } elseif ($payment['status_text'] === 'Sai mệnh giá') {
-                                                                                echo 'Sai mệnh giá (Thực tế: ' . number_format($payment['detected_value'], 0, ',', '.') . ' VNĐ)';
-                                                                            } else {
-                                                                                echo 'Đang chờ xử lý';
-                                                                            }
-                                                                            ?>
-                                                                        </td>
-                                                                        <td style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">
-                                                                            <?php
-                                                                                $status_text = htmlspecialchars($payment['status_text']);
-                                                                                if (strpos($status_text, 'Thành công') !== false) {
-                                                                                    echo '<span style="color: green; font-weight: bold;">' . $status_text . '</span>';
-                                                                                } elseif (strpos($status_text, 'Chờ xử lý') !== false || strpos($status_text, 'Đang chờ') !== false) {
-                                                                                    echo '<span style="color: orange; font-weight: bold;">' . $status_text . '</span>';
-                                                                                } elseif (strpos($status_text, 'Lỗi') !== false || strpos($status_text, 'Sai') !== false) {
-                                                                                    echo '<span style="color: red; font-weight: bold;">' . $status_text . '</span>';
-                                                                                } else {
-                                                                                    echo $status_text;
-                                                                                }
-                                                                            ?>
-                                                                        </td>
-                                                                    </tr>
-                                                                <?php endforeach; ?>
-                                                            <?php else : ?>
-                                                                <tr>
-                                                                    <td colspan="5" style="padding: 12px; text-align: center;">Chưa có lịch sử nạp thẻ cào.</td>
-                                                                </tr>
-                                                            <?php endif; ?>
-                                                        </tbody>
-                                                    </table>
-                                                    <div id="pagination" style="text-align:center; padding:15px 0;">
-                                                        <?php
-                                                        $total_pages_card = ceil($total_card_payments / $payments_per_page);
-                                                        if ($total_pages_card > 1) {
-                                                            for ($i = 1; $i <= $total_pages_card; $i++) {
-                                                                echo '<a href="?page_card=' . $i . '&tab=card" class="pagination-link" data-type="card" style="display: inline-block; padding: 6px 12px; margin-right: 4px; text-decoration: none; border: 1px solid #ff5601; border-radius: 4px; transition: 0.3s; ' . ($i == $current_page_card ? 'background:#ff5601; color:#fff;' : 'background:#fff; color:#ff5601;') . '" onmouseover="this.style.backgroundColor=\'#ff5601\'; this.style.color=\'white\';" onmouseout="this.style.backgroundColor=\'' . ($i == $current_page_card ? '#ff5601' : '#fff') . '\'; this.style.color=\'' . ($i == $current_page_card ? '#fff' : '#ff5601') . '\';">';
-                                                                echo $i;
-                                                                echo '</a>';
-                                                            }
-                                                        }
-                                                        ?>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div id="transferSection" style="display:none;">
+                                    <div id="transferSection">
     <div class="box_list_chuyenmuc">
         <div class="box_midss">
             <div class="box_detai" style="padding:5px;">
@@ -404,7 +267,7 @@ include_once '../data_nap_the.php';
                     <script src="/view/static/js/rocket-loader.min.js" data-cf-settings="3248e74b3f0d3f240922716b-|49" defer></script>
                     <script>
                         $(document).ready(function() {
-                            var activeTab = new URLSearchParams(window.location.search).get('tab') || 'card';
+                            var activeTab = new URLSearchParams(window.location.search).get('tab') || 'transfer';
                             function setActiveRechargeTab(tabId) {
                                 $("#cardSection").hide();
                                 $("#transferSection").hide();
