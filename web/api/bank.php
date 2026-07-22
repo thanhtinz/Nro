@@ -1,258 +1,213 @@
 <?php
+/**
+ * Webhook nhận biến động số dư từ SePay (https://sepay.vn).
+ *
+ * SePay gửi POST JSON khi có giao dịch, ví dụ:
+ *   {
+ *     "id": 92704, "gateway": "MBBank", "transactionDate": "2024-01-01 10:00:00",
+ *     "accountNumber": "0392920228", "content": "[username] naptien",
+ *     "transferType": "in", "transferAmount": 50000,
+ *     "referenceCode": "FT24...", "description": "..."
+ *   }
+ * Xác thực bằng header:  Authorization: Apikey <api_key>
+ *
+ * Người chơi chuyển khoản với nội dung [username] naptien -> cộng vào account.vnd & tongnap.
+ */
 
 session_start();
-include_once '../connect.php'; // Chứa $conn
-include_once '../forum_data.php'; // Nếu cần các biến session khác
+include_once '../connect.php'; // $conn, $sepay
 
 header('Content-Type: application/json');
 $response = ['status' => 'error', 'message' => 'Invalid request or data.'];
 
 function log_activity($message, $type = 'info') {
-    $log_file = __DIR__ . '/sepay_webhook_debug.log'; // Log riêng cho SePay webhook
+    $log_file = __DIR__ . '/sepay_webhook_debug.log';
     $timestamp = date('[Y-m-d H:i:s]');
     file_put_contents($log_file, $timestamp . " [" . strtoupper($type) . "] " . $message . "\n", FILE_APPEND);
 }
 
-// DEBUGGING BLOCK: Ghi log chi tiết về request nhận được
-log_activity("DEBUG: =========== New Webhook Request Start ===========");
-log_activity("DEBUG: Request Method: " . ($_SERVER['REQUEST_METHOD'] ?? 'N/A'));
-log_activity("DEBUG: Request URI: " . ($_SERVER['REQUEST_URI'] ?? 'N/A'));
-log_activity("DEBUG: Remote IP: " . ($_SERVER['REMOTE_ADDR'] ?? 'N/A'));
+// ---- Log request để debug ----
+log_activity("=========== SePay Webhook Request ===========");
+log_activity("Method: " . ($_SERVER['REQUEST_METHOD'] ?? 'N/A') . " | IP: " . ($_SERVER['REMOTE_ADDR'] ?? 'N/A'));
 
-$all_headers = [];
-if (function_exists('getallheaders')) {
-    $all_headers = getallheaders();
-} else {
-    // Fallback for environments where getallheaders() is not available (e.g., Nginx + PHP-FPM)
-    foreach ($_SERVER as $name => $value) {
-        if (substr($name, 0, 5) == 'HTTP_') {
-            $all_headers[str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))))] = $value;
-        }
+$input_raw = file_get_contents('php://input');
+log_activity("Raw input (len " . strlen($input_raw) . "): " . ($input_raw === '' ? "[EMPTY]" : $input_raw));
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' && $_SERVER['REQUEST_METHOD'] !== 'GET') {
+    http_response_code(405);
+    $response['message'] = 'Chỉ chấp nhận POST hoặc GET.';
+    echo json_encode($response);
+    exit();
+}
+
+// ---- Phân giải dữ liệu (JSON ưu tiên, fallback form/GET) ----
+$data = [];
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $ct = $_SERVER['CONTENT_TYPE'] ?? '';
+    if (stripos($ct, 'application/json') !== false) {
+        $data = json_decode($input_raw, true) ?: [];
+    } elseif (stripos($ct, 'application/x-www-form-urlencoded') !== false || $ct === '') {
+        parse_str($input_raw, $data);
+        if (empty($data)) { $data = json_decode($input_raw, true) ?: []; }
+    } else {
+        $data = json_decode($input_raw, true);
+        if (json_last_error() !== JSON_ERROR_NONE) { parse_str($input_raw, $data); }
+    }
+} else { // GET
+    $data = $_GET;
+}
+
+if (empty($data) || !is_array($data)) {
+    $response['message'] = 'Dữ liệu webhook không hợp lệ (không phải JSON/Form data hoặc trống).';
+    log_activity("Dữ liệu không hợp lệ: " . $input_raw, 'ERROR');
+    echo json_encode($response);
+    exit();
+}
+
+// ---- Xác thực Authorization: Apikey <key> (cách chuẩn của SePay) ----
+$api_key = $sepay['api_key'] ?? '';
+$auth_header = $_SERVER['HTTP_AUTHORIZATION'] ?? ($_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '');
+$received_key = '';
+if (preg_match('/^\s*Apikey\s+(.+)$/i', $auth_header, $m)) {
+    $received_key = trim($m[1]);
+}
+// Tương thích ngược: chấp nhận chữ ký HMAC X-Signature nếu SePay cấu hình kiểu cũ.
+$received_signature = $_SERVER['HTTP_X_SIGNATURE'] ?? '';
+$hmac_ok = $received_signature !== '' && hash_equals(hash_hmac('sha256', $input_raw, $api_key), $received_signature);
+
+if ($api_key !== '') {
+    $apikey_ok = $received_key !== '' && hash_equals($api_key, $received_key);
+    if (!$apikey_ok && !$hmac_ok) {
+        http_response_code(401);
+        $response['message'] = 'Xác thực webhook thất bại (Apikey/chữ ký không hợp lệ).';
+        log_activity("Xác thực thất bại. Auth header: '" . $auth_header . "'", 'WARNING');
+        echo json_encode($response);
+        exit();
     }
 }
-log_activity("DEBUG: All Headers: " . json_encode($all_headers));
 
-$input_raw_debug = file_get_contents('php://input');
-log_activity("DEBUG: Raw input from php://input (length " . strlen($input_raw_debug) . "): " . (empty($input_raw_debug) ? "[EMPTY]" : $input_raw_debug));
-log_activity("DEBUG: ===================================================");
+// ---- Trích xuất trường giao dịch (SePay chuẩn + fallback tên cũ) ----
+$transaction_id = $data['id'] ?? $data['referenceCode'] ?? $data['transaction_id'] ?? $data['refId'] ?? null;
+if ($transaction_id !== null) { $transaction_id = (string)$transaction_id; }
+$amount = (int)($data['transferAmount'] ?? $data['amount'] ?? 0);
+$description = $data['content'] ?? $data['description'] ?? '';
+$transfer_type = strtolower((string)($data['transferType'] ?? 'in')); // SePay: "in" = tiền vào
+$bank_account_number = $data['accountNumber'] ?? $data['receiverAccount'] ?? '';
+$sender_bank_name = $data['gateway'] ?? $data['senderBankName'] ?? '';
+$transfer_time = $data['transactionDate'] ?? $data['transactionTime'] ?? date('Y-m-d H:i:s');
 
-// KẾT THÚC DEBUGGING BLOCK
+if (empty($transaction_id) || $amount <= 0) {
+    $response['message'] = 'Dữ liệu giao dịch thiếu thông tin quan trọng từ SePay.';
+    log_activity("Thiếu thông tin giao dịch: " . json_encode($data), 'ERROR');
+    echo json_encode($response);
+    exit();
+}
 
-// Kiểm tra phương thức yêu cầu (GET hoặc POST)
-if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET') {
-    $input_raw = $input_raw_debug; // Sử dụng dữ liệu đã lấy ở phần debug
-    $data = [];
+// SePay chỉ báo webhook khi giao dịch thành công; chỉ cộng tiền cho giao dịch TIỀN VÀO.
+$is_incoming = ($transfer_type === 'in');
 
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $content_type = $_SERVER['CONTENT_TYPE'] ?? '';
+// ---- Lấy username từ nội dung: [username] ----
+$username_from_description = '';
+if (preg_match('/\[(.*?)\]/', $description, $mu)) {
+    $username_from_description = trim($mu[1]);
+}
+$prefix = $sepay['prefix'] ?? 'naptien';
+$is_top_up_transaction = ($prefix === '' || stripos($description, $prefix) !== false);
 
-        if (stripos($content_type, 'application/json') !== false) {
-            $data = json_decode($input_raw, true);
-            log_activity("Received POST Webhook Data (JSON): " . $input_raw);
-        } elseif (stripos($content_type, 'application/x-www-form-urlencoded') !== false || empty($content_type)) {
-            parse_str($input_raw, $data);
-            log_activity("Received POST Webhook Data (Form Encoded): " . $input_raw);
-        } else {
-            // Fallback: Thử cả JSON và form-urlencoded nếu Content-Type không rõ ràng
-            $data = json_decode($input_raw, true);
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                parse_str($input_raw, $data);
-            }
-            log_activity("Received POST Webhook Data (Unknown Content-Type, tried parsing): " . $input_raw);
-        }
-    } elseif ($_SERVER['REQUEST_METHOD'] === 'GET') {
-        $input_raw = http_build_query($_GET);
-        $data = $_GET;
-        log_activity("Received GET Webhook Data (from GET params): " . $input_raw);
-    }
+if (empty($username_from_description)) {
+    $response['message'] = 'Không tìm thấy tên người dùng trong nội dung chuyển khoản (yêu cầu định dạng [username]).';
+    log_activity("Thiếu [username] trong nội dung: '" . $description . "' - TxID: " . $transaction_id, 'WARNING');
+    echo json_encode($response);
+    exit();
+}
 
-    if (empty($data)) {
-        $response['message'] = 'Dữ liệu webhook không hợp lệ (không phải JSON/Form data hoặc trống).';
-        log_activity("Dữ liệu nhận được không hợp lệ: " . $input_raw, 'ERROR');
-        echo json_encode($response);
-        exit();
-    }
+// ---- Kiểm tra username tồn tại ----
+$stmt = $conn->prepare("SELECT id FROM `account` WHERE username = ?");
+if (!$stmt) {
+    log_activity("Lỗi prepare kiểm tra user: " . $conn->error, 'ERROR');
+    $response['message'] = 'Lỗi hệ thống khi kiểm tra tài khoản.';
+    echo json_encode($response);
+    exit();
+}
+$stmt->bind_param("s", $username_from_description);
+$stmt->execute();
+$stmt->store_result();
+$user_exists = $stmt->num_rows > 0;
+$stmt->close();
 
-    $sepay_webhook_secret = 'XDVTMYSFTKSCXPDUOW74OBFC6IVLEH6G8UNTT15R0JARPMWYXYJ3EKIXQAK7AVPY';
-    $received_signature = $_SERVER['HTTP_X_SIGNATURE'] ?? '';
+if (!$user_exists) {
+    $response['message'] = 'Tên tài khoản "' . htmlspecialchars($username_from_description) . '" không tồn tại.';
+    log_activity("User không tồn tại: " . $username_from_description . " - TxID: " . $transaction_id, 'WARNING');
+    echo json_encode($response);
+    exit();
+}
 
-    $calculated_signature = hash_hmac('sha256', $input_raw, $sepay_webhook_secret);
+// ---- Chống trùng giao dịch ----
+$stmt = $conn->prepare("SELECT id FROM bank_transfers WHERE transaction_id = ?");
+$stmt->bind_param("s", $transaction_id);
+$stmt->execute();
+$stmt->store_result();
+$already = $stmt->num_rows > 0;
+$stmt->close();
 
-    // Xác minh chữ ký: Nếu có chữ ký được gửi và nó không khớp thì từ chối.
-    // Nếu không có chữ ký được gửi (phổ biến với GET hoặc cấu hình SePay khác), thì bỏ qua bước này.
-    if (!empty($received_signature) && !hash_equals($calculated_signature, $received_signature)) {
-        $response['message'] = 'Chữ ký webhook không hợp lệ. Yêu cầu bị từ chối.';
-        log_activity("Chữ ký webhook không hợp lệ. Dữ liệu: " . $input_raw . " - Chữ ký nhận được: " . $received_signature . " - Chữ ký tính toán: " . $calculated_signature, 'WARNING');
-        echo json_encode($response);
-        exit();
-    }
+if ($already) {
+    $response['status'] = 'success'; // trả success để SePay không gửi lại
+    $response['message'] = 'Giao dịch đã được xử lý trước đó.';
+    log_activity("Trùng giao dịch: " . $transaction_id, 'INFO');
+    echo json_encode($response);
+    exit();
+}
 
-    $transaction_id = $data['transaction_id'] ?? $data['refId'] ?? null;
-    $amount = (int)($data['amount'] ?? 0);
-    $description = $data['description'] ?? $data['content'] ?? '';
-    $status = $data['status'] ?? '';
-    $bank_account_number = $data['receiverAccount'] ?? '';
-    $sender_bank_name = $data['senderBankName'] ?? '';
-    $transfer_time = $data['transactionTime'] ?? date('Y-m-d H:i:s');
+// ---- Lưu giao dịch + cộng tiền (transaction để đảm bảo nhất quán) ----
+$will_credit = ($is_incoming && $is_top_up_transaction);
+$final_status = $will_credit ? 'success' : ($is_incoming ? 'unknown' : 'ignored');
+$is_credited = $will_credit ? 1 : 0;
 
-    if (empty($transaction_id) || $amount <= 0 || empty($status)) {
-        $response['message'] = 'Dữ liệu giao dịch thiếu thông tin quan trọng từ SePay.';
-        log_activity("Dữ liệu giao dịch thiếu thông tin quan trọng từ SePay: " . json_encode($data), 'ERROR');
-        echo json_encode($response);
-        exit();
-    }
-
-    // --- TRÍCH XUẤT USERNAME TỪ DESCRIPTION ---
-    $username_from_description = '';
-    preg_match('/\[(.*?)\]/', $description, $matches);
-    if (isset($matches[1])) {
-        $username_from_description = trim($matches[1]);
-    }
-
-    // Kiểm tra từ khóa "naptien" trong nội dung mô tả
-    $is_top_up_transaction = (stripos($description, 'naptien') !== false);
-
-    if (empty($username_from_description)) {
-        $response['status'] = 'error';
-        $response['message'] = 'Không tìm thấy tên người dùng trong nội dung chuyển khoản. Yêu cầu nội dung có định dạng [username].';
-        log_activity("Không tìm thấy tên người dùng trong nội dung chuyển khoản: " . $description . " - Transaction ID: " . $transaction_id, 'WARNING');
-        echo json_encode($response);
-        exit();
-    }
-
-    // --- KIỂM TRA USERNAME CÓ TỒN TẠI TRONG BẢNG `account` KHÔNG ---
-    // Đảm bảo tên bảng là `account` như bạn đã cung cấp
-    $stmt_check_user = $conn->prepare("SELECT id FROM `account` WHERE username = ?");
-    if ($stmt_check_user) {
-        $stmt_check_user->bind_param("s", $username_from_description);
-        $stmt_check_user->execute();
-        $stmt_check_user->store_result();
-        if ($stmt_check_user->num_rows === 0) {
-            $response['status'] = 'error';
-            $response['message'] = 'Tên tài khoản "' . htmlspecialchars($username_from_description) . '" không tồn tại trong hệ thống. Vui lòng kiểm tra lại nội dung chuyển khoản hoặc liên hệ hỗ trợ.';
-            log_activity("Tên tài khoản không tồn tại: " . $username_from_description . " trong giao dịch " . $transaction_id, 'WARNING');
-            echo json_encode($response);
-            $stmt_check_user->close();
-            exit();
-        }
-        $stmt_check_user->close();
-    } else {
-        log_activity("Lỗi prepare kiểm tra người dùng tồn tại: " . $conn->error, 'ERROR');
-        $response['message'] = 'Lỗi hệ thống khi kiểm tra tài khoản người dùng.';
-        echo json_encode($response);
-        exit();
-    }
-
-    // --- KIỂM TRA GIAO DỊCH ĐÃ ĐƯỢC XỬ LÝ CHƯA (CHỐNG TRÙNG LẶP) ---
-    $stmt_check_transfer = $conn->prepare("SELECT id FROM bank_transfers WHERE transaction_id = ?");
-    if ($stmt_check_transfer) {
-        $stmt_check_transfer->bind_param("s", $transaction_id);
-        $stmt_check_transfer->execute();
-        $stmt_check_transfer->store_result();
-        if ($stmt_check_transfer->num_rows > 0) {
-            $response['status'] = 'success'; // Trả về success để SePay không gửi lại webhook
-            $response['message'] = 'Giao dịch đã được xử lý trước đó.';
-            log_activity("Giao dịch đã được xử lý trước đó: " . $transaction_id, 'INFO');
-            echo json_encode($response);
-            $stmt_check_transfer->close();
-            exit();
-        }
-        $stmt_check_transfer->close();
-    } else {
-        log_activity("Lỗi prepare kiểm tra giao dịch đã tồn tại: " . $conn->error, 'ERROR');
-        $response['message'] = 'Lỗi hệ thống khi kiểm tra giao dịch. Vui lòng liên hệ hỗ trợ.';
-        echo json_encode($response);
-        exit();
-    }
-
-    // --- XỬ LÝ VÀ LƯU TRỮ GIAO DỊCH VÀO DATABASE ---
-    $is_credited = 0;
-    $final_status = 'pending';
-
-    if ($status === 'success') {
-        $final_status = 'success';
-        $is_credited = 1;
-    } elseif ($status === 'failed' || $status === 'error') {
-        $final_status = 'failed';
-    } else {
-        $final_status = 'unknown';
-    }
-
-    $stmt_insert_transfer = $conn->prepare(
-        "INSERT INTO bank_transfers (
-            `transaction_id`, `username`, `amount`, `description`, `status`,
-            `sender_bank_name`, `created_at`, `is_credited`
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+$conn->begin_transaction();
+try {
+    $stmt = $conn->prepare(
+        "INSERT INTO bank_transfers
+           (`transaction_id`, `username`, `amount`, `description`, `status`, `sender_bank_name`, `created_at`, `is_credited`)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
     );
+    if (!$stmt) { throw new Exception("prepare insert: " . $conn->error); }
+    $stmt->bind_param(
+        "ssissssi",
+        $transaction_id, $username_from_description, $amount, $description,
+        $final_status, $sender_bank_name, $transfer_time, $is_credited
+    );
+    if (!$stmt->execute()) { throw new Exception("execute insert: " . $stmt->error); }
+    $stmt->close();
 
-    if ($stmt_insert_transfer) {
-        $stmt_insert_transfer->bind_param(
-            "ssissssi",
-            $transaction_id,
-            $username_from_description,
-            $amount,
-            $description,
-            $final_status,
-            $sender_bank_name,
-            $transfer_time,
-            $is_credited
-        );
-
-        if (!$stmt_insert_transfer->execute()) {
-            log_activity("Lỗi execute INSERT vào bảng bank_transfers: " . $stmt_insert_transfer->error . " - Data: " . json_encode($data), 'ERROR');
-            $response['message'] = 'Lỗi hệ thống khi lưu lịch sử chuyển khoản.';
-            echo json_encode($response);
-            $stmt_insert_transfer->close();
-            exit();
-        }
-        $stmt_insert_transfer->close();
-    } else {
-        log_activity("Lỗi prepare INSERT vào bảng bank_transfers: " . $conn->error, 'ERROR');
-        $response['message'] = 'Lỗi hệ thống khi chuẩn bị lưu lịch sử chuyển khoản.';
-        echo json_encode($response);
-        exit();
+    if ($will_credit) {
+        $stmt = $conn->prepare("UPDATE `account` SET vnd = vnd + ?, tongnap = tongnap + ? WHERE username = ?");
+        if (!$stmt) { throw new Exception("prepare update balance: " . $conn->error); }
+        $stmt->bind_param("iis", $amount, $amount, $username_from_description);
+        if (!$stmt->execute()) { throw new Exception("execute update balance: " . $stmt->error); }
+        $stmt->close();
     }
 
-    // --- CỘNG TIỀN VÀ TỔNG NẠP VÀO TÀI KHOẢN NGƯỜI DÙNG ---
-    if ($is_credited === 1 && $is_top_up_transaction) {
-        // Cập nhật cả 'vnd' và 'tongnap' trong bảng `account`
-        $stmt_update_user_balance = $conn->prepare("UPDATE `account` SET vnd = vnd + ?, tongnap = tongnap + ? WHERE username = ?");
-        if ($stmt_update_user_balance) {
-            $stmt_update_user_balance->bind_param("iis", $amount, $amount, $username_from_description); // amount cho vnd và tongnap
-            if ($stmt_update_user_balance->execute()) {
-                $response['status'] = 'success';
-                $response['message'] = 'Nạp tiền thành công! Tiền đã được cộng vào tài khoản ' . $username_from_description . '.';
-                log_activity("Nạp tiền thành công: " . $amount . " VNĐ đã được cộng vào tài khoản " . $username_from_description . " (Transaction ID: " . $transaction_id . ")", 'INFO');
-            } else {
-                $response['message'] = 'Lỗi khi cộng tiền vào tài khoản người dùng. Vui lòng liên hệ hỗ trợ.';
-                log_activity("Lỗi execute UPDATE số dư người dùng (vnd, tongnap): " . $stmt_update_user_balance->error . " - Transaction ID: " . $transaction_id, 'ERROR');
-            }
-            $stmt_update_user_balance->close();
-        } else {
-            log_activity("Lỗi prepare UPDATE số dư người dùng (vnd, tongnap): " . $conn->error, 'ERROR');
-            $response['message'] = 'Lỗi hệ thống khi chuẩn bị cập nhật số dư người dùng.';
-        }
-    } else {
-        // Giao dịch không thành công hoặc không phải giao dịch nạp tiền, chỉ ghi nhận vào log
-        $response['status'] = 'success'; // Trả về success để SePay không gửi lại webhook nếu không phải lỗi của bạn
-        $message_log = "Giao dịch được ghi nhận với trạng thái: " . $final_status;
-        if (!$is_top_up_transaction) {
-            $message_log .= " (Không phải giao dịch nạp tiền)";
-        }
-        $message_log .= " (Transaction ID: " . $transaction_id . ")";
-        log_activity($message_log, 'INFO');
-        $response['message'] = 'Giao dịch được ghi nhận. ' . ($is_top_up_transaction ? '' : 'Đây không phải giao dịch nạp tiền hoặc không thành công.');
-    }
+    $conn->commit();
+} catch (Exception $e) {
+    $conn->rollback();
+    log_activity("Lỗi xử lý giao dịch " . $transaction_id . ": " . $e->getMessage(), 'ERROR');
+    $response['message'] = 'Lỗi hệ thống khi xử lý giao dịch.';
+    echo json_encode($response);
+    if (isset($conn) && $conn->ping()) { $conn->close(); }
+    exit();
+}
 
+if ($will_credit) {
+    $response['status'] = 'success';
+    $response['message'] = 'Nạp tiền thành công! Đã cộng ' . number_format($amount) . ' VNĐ cho ' . $username_from_description . '.';
+    log_activity("Cộng " . $amount . " VNĐ cho " . $username_from_description . " (TxID: " . $transaction_id . ")", 'INFO');
 } else {
-    $response['message'] = 'Yêu cầu không hợp lệ. Chỉ chấp nhận phương thức POST hoặc GET.';
-    log_activity("Phương thức yêu cầu không hợp lệ: " . $_SERVER['REQUEST_METHOD'] . " từ IP: " . ($_SERVER['REMOTE_ADDR'] ?? 'UNKNOWN'), 'WARNING');
+    $response['status'] = 'success'; // ghi nhận, không gửi lại
+    $response['message'] = $is_incoming
+        ? 'Giao dịch ghi nhận nhưng không phải nội dung nạp tiền hợp lệ.'
+        : 'Giao dịch tiền ra, đã ghi nhận (không cộng tiền).';
+    log_activity("Ghi nhận không cộng tiền. type=" . $transfer_type . " topup=" . ($is_top_up_transaction ? '1' : '0') . " TxID: " . $transaction_id, 'INFO');
 }
 
-if (isset($conn) && $conn->ping()) {
-    $conn->close();
-}
-
+if (isset($conn) && $conn->ping()) { $conn->close(); }
 echo json_encode($response);
-
-?>

@@ -17,10 +17,12 @@ $__title  = $__title  ?? 'Admin';
 <header class="topbar">
     <div class="brand">🐉 NRO Admin</div>
     <nav>
-        <a href="index.php"    class="<?= $__active==='dashboard'?'on':'' ?>">Tổng quan</a>
-        <a href="accounts.php" class="<?= $__active==='accounts'?'on':'' ?>">Tài khoản</a>
-        <a href="players.php"  class="<?= $__active==='players'?'on':'' ?>">Nhân vật</a>
-        <a href="payments.php" class="<?= $__active==='payments'?'on':'' ?>">Nạp thẻ</a>
+        <a href="index.php"         class="<?= $__active==='dashboard'?'on':'' ?>">Tổng quan</a>
+        <a href="accounts.php"      class="<?= $__active==='accounts'?'on':'' ?>">Tài khoản</a>
+        <a href="players.php"       class="<?= $__active==='players'?'on':'' ?>">Nhân vật</a>
+        <a href="giftcodes.php"     class="<?= $__active==='giftcodes'?'on':'' ?>">Giftcode</a>
+        <a href="notifications.php" class="<?= $__active==='notifications'?'on':'' ?>">Thông báo</a>
+        <a href="payments.php"      class="<?= $__active==='payments'?'on':'' ?>">Nạp thẻ</a>
     </nav>
     <div class="me">
         <span><?= e($_SESSION['admin_username'] ?? '') ?></span>

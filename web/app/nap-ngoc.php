@@ -140,145 +140,11 @@ include_once '../data_nap_the.php';
                                             </tr>
                                         </tbody>
                                     </table>
-                                    <div style="text-align:center; margin-bottom: 20px;">
-                                        <button id="btnCard" class="active-recharge-btn" style="padding: 10px 20px; background-color: #ff5601; color: #fff; border: none; border-radius: 4px; margin-right: 10px;">Nạp Thẻ Cào Tự Động</button>
-                                        <button id="btnTransfer" class="inactive-recharge-btn" style="padding: 10px 20px; background-color: #ccc; color: #000; border: none; border-radius: 4px;">Chuyển Khoản</button>
+                                                                        <div style="text-align:center; margin: 10px 0 20px;">
+                                        <span style="display:inline-block; padding:10px 20px; background-color:#ff5601; color:#fff; border-radius:4px; font-weight:bold;">Chuyển Khoản Ngân Hàng (SePay)</span>
                                     </div>
 
-                                    <div id="cardSection">
-                                        <div class="box_list_chuyenmuc">
-                                            <div class="box_midss">
-                                                <div class="box_detai" style="padding:5px;">
-                                                    <center>
-                                                        <b style="color:red">Vui lòng nhập đầy đủ thông tin</b>
-                                                        <br>
-                                                        <div id="comment_error" style="color:red;"></div>
-                                                    </center>
-                                                    <form id="cardPaymentForm" method="post" action="/Api/Card">
-                                                        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf_token); ?>">
-                                                        <table style="width:100%; max-width:500px; margin:0 auto;">
-                                                            <tbody>
-                                                                <tr>
-                                                                    <td><b>Loại Thẻ</b></td>
-                                                                    <td>
-                                                                        <select id="cardType" name="cardType" style="width:100%; border-radius: 4px; border: 1px solid #CCC; padding: 2px;" required>
-                                                                            <option value="VIETTEL" selected>VIETTEL</option>
-                                                                            <option value="VINAPHONE">VINAPHONE</option>
-                                                                            <option value="MOBIPHONE">MOBIPHONE</option>
-                                                                            <option value="VNMOBI">VNMOBI</option>
-                                                                            <option value="VCOIN">VCOIN</option>
-                                                                            <option value="ZING">ZING</option>
-                                                                            <option value="GATE">GATE</option>
-                                                                            <option value="GARENA">GARENA</option>
-                                                                        </select>
-                                                                    </td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td><b>Số tiền</b></td>
-                                                                    <td>
-                                                                        <select id="amount" style="width:100%; border-radius: 4px; border: 1px solid #CCC; padding: 2px;" name="amount" required>
-                                                                            <option value="">Chọn mệnh giá</option>
-                                                                            <option value="10000">10.000</option>
-                                                                            <option value="20000">20.000</option>
-                                                                            <option value="30000">30.000</option>
-                                                                            <option value="50000">50.000</option>
-                                                                            <option value="100000">100.000</option>
-                                                                            <option value="200000">200.000</option>
-                                                                            <option value="300000">300.000</option>
-                                                                            <option value="500000">500.000</option>
-                                                                            <option value="1000000">1.000.000</option>
-                                                                        </select>
-                                                                    </td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td><b>Mã Thẻ</b></td>
-                                                                    <td><input type="text" id="cardPin" name="cardPin" style="width:100%;" required></td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td><b>Số Seri</b></td>
-                                                                    <td><input type="text" id="cardSerial" name="cardSerial" style="width:100%;" required></td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td></td>
-                                                                    <td style="text-align:center; padding-top:10px;">
-                                                                        <input class="w3-button w3-red" type="submit" value="Xác Nhận">
-                                                                    </td>
-                                                                </tr>
-                                                            </tbody>
-                                                        </table>
-                                                    </form>
-                                                    <br>
-                                                    <hr>
-                                                    <h3>Lịch Sử Nạp Thẻ</h3>
-                                                    <table width="100%" border="1" cellspacing="0" style="width: 100%; border-collapse: collapse; background-color: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);">
-                                                        <thead>
-                                                            <tr style="background-color: #b65d2f; color: white; font-weight: bold;">
-                                                                <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">Thời gian</th>
-                                                                <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">Loại thẻ</th>
-                                                                <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">Mệnh giá khai báo</th>
-                                                                <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">Mệnh giá thực nhận</th>
-                                                                <th style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">Trạng thái</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            <?php if (!empty($history_card_payments)) : ?>
-                                                                <?php foreach ($history_card_payments as $payment) : ?>
-                                                                    <tr style="transition: 0.3s; cursor: pointer;" onmouseover="this.style.backgroundColor='#f5f5f5'" onmouseout="this.style.backgroundColor='transparent'">
-                                                                        <td style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd; color: black;"><?php echo htmlspecialchars($payment['created_at']); ?></td>
-                                                                        <td style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd; color: black;"><?php echo htmlspecialchars($payment['card_telco']); ?></td>
-                                                                        <td style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd; color: black;"><?php echo number_format($payment['declared_amount'], 0, ',', '.') . ' VNĐ'; ?></td>
-                                                                        <td style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd; color: black;">
-                                                                            <?php
-                                                                            if (strpos($payment['status_text'], 'Thành công') !== false) {
-                                                                                echo number_format($payment['detected_value'], 0, ',', '.') . ' VNĐ';
-                                                                            } elseif ($payment['status_text'] === 'Sai mệnh giá') {
-                                                                                echo 'Sai mệnh giá (Thực tế: ' . number_format($payment['detected_value'], 0, ',', '.') . ' VNĐ)';
-                                                                            } else {
-                                                                                echo 'Đang chờ xử lý';
-                                                                            }
-                                                                            ?>
-                                                                        </td>
-                                                                        <td style="padding: 12px; text-align: center; border-bottom: 1px solid #ddd;">
-                                                                            <?php
-                                                                                $status_text = htmlspecialchars($payment['status_text']);
-                                                                                if (strpos($status_text, 'Thành công') !== false) {
-                                                                                    echo '<span style="color: green; font-weight: bold;">' . $status_text . '</span>';
-                                                                                } elseif (strpos($status_text, 'Chờ xử lý') !== false || strpos($status_text, 'Đang chờ') !== false) {
-                                                                                    echo '<span style="color: orange; font-weight: bold;">' . $status_text . '</span>';
-                                                                                } elseif (strpos($status_text, 'Lỗi') !== false || strpos($status_text, 'Sai') !== false) {
-                                                                                    echo '<span style="color: red; font-weight: bold;">' . $status_text . '</span>';
-                                                                                } else {
-                                                                                    echo $status_text;
-                                                                                }
-                                                                            ?>
-                                                                        </td>
-                                                                    </tr>
-                                                                <?php endforeach; ?>
-                                                            <?php else : ?>
-                                                                <tr>
-                                                                    <td colspan="5" style="padding: 12px; text-align: center;">Chưa có lịch sử nạp thẻ cào.</td>
-                                                                </tr>
-                                                            <?php endif; ?>
-                                                        </tbody>
-                                                    </table>
-                                                    <div id="pagination" style="text-align:center; padding:15px 0;">
-                                                        <?php
-                                                        $total_pages_card = ceil($total_card_payments / $payments_per_page);
-                                                        if ($total_pages_card > 1) {
-                                                            for ($i = 1; $i <= $total_pages_card; $i++) {
-                                                                echo '<a href="?page_card=' . $i . '&tab=card" class="pagination-link" data-type="card" style="display: inline-block; padding: 6px 12px; margin-right: 4px; text-decoration: none; border: 1px solid #ff5601; border-radius: 4px; transition: 0.3s; ' . ($i == $current_page_card ? 'background:#ff5601; color:#fff;' : 'background:#fff; color:#ff5601;') . '" onmouseover="this.style.backgroundColor=\'#ff5601\'; this.style.color=\'white\';" onmouseout="this.style.backgroundColor=\'' . ($i == $current_page_card ? '#ff5601' : '#fff') . '\'; this.style.color=\'' . ($i == $current_page_card ? '#fff' : '#ff5601') . '\';">';
-                                                                echo $i;
-                                                                echo '</a>';
-                                                            }
-                                                        }
-                                                        ?>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div id="transferSection" style="display:none;">
+                                    <div id="transferSection">
     <div class="box_list_chuyenmuc">
         <div class="box_midss">
             <div class="box_detai" style="padding:5px;">
@@ -287,56 +153,101 @@ include_once '../data_nap_the.php';
                     <br>
                     <div id="transfer_error" style="color:red;"></div>
                 </center>
-                <div style="max-width:500px; margin: 0 auto; display:flex; align-items:center; border:1px solid #ccc; border-radius:8px; overflow:hidden; box-shadow: 0px 4px 10px rgba(0,0,0,0.1);">
-                    <div style="flex:0 0 40%; background-color: #f5f5f5; text-align:center; padding:10px;">
-                        <img id="qrCodeImage" src="https://api.vietqr.io/image/MB-88408121999-compact.png?accountName=LE%20THE%20THINH" alt="QR Code" style="max-width:100%; height:auto;">
+                <div style="max-width:520px; margin:0 auto; border:1px solid #ccc; border-radius:8px; overflow:hidden; box-shadow:0px 4px 10px rgba(0,0,0,0.1);">
+                    <div style="padding:12px; background:#f5f5f5; text-align:center;">
+                        <label style="font-weight:bold;">Chọn số tiền nạp:</label>
+                        <select id="napAmount" style="border-radius:4px; border:1px solid #CCC; padding:4px; margin-left:6px;">
+                            <option value="10000">10.000</option>
+                            <option value="20000">20.000</option>
+                            <option value="50000" selected>50.000</option>
+                            <option value="100000">100.000</option>
+                            <option value="200000">200.000</option>
+                            <option value="500000">500.000</option>
+                            <option value="1000000">1.000.000</option>
+                        </select>
                     </div>
-                    <div style="flex:1; padding:10px; font-family: 'Times New Roman', serif;">
-                        <p style="margin:5px 0;"><b>Tên Tài Khoản:</b> LUONG VAN TAN</p>
-                        <p style="margin:5px 0;"><b>Số Tài Khoản:</b> 0392920228</p>
-                        <p style="margin:5px 0;"><b>Ngân Hàng:</b> MBBANK</p>
-                        <p style="margin:5px 0;"><b>Nội Dung:</b> <span id="transferContentDisplay"></span></p>
-                        <span id="actualTransferContent" style="display:none;"></span> <button onclick="copyToClipboard('LUONG VAN TAN', 'Tên Tài Khoản')" style="background-color: #4CAF50; color: white; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; margin-top: 5px;">Copy Tên TK</button>
-                        <button onclick="copyToClipboard('0392920228', 'Số Tài Khoản')" style="background-color: #4CAF50; color: white; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; margin-top: 5px;">Copy Số TK</button>
-                        <button onclick="copyTransferContent()" style="background-color: #4CAF50; color: white; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; margin-top: 5px;">Copy Nội Dung</button>
+                    <div style="display:flex; align-items:center; flex-wrap:wrap;">
+                        <div style="flex:0 0 45%; background:#f5f5f5; text-align:center; padding:10px; min-width:180px;">
+                            <img id="qrCodeImage" src="" alt="QR SePay" style="max-width:100%; height:auto;">
+                        </div>
+                        <div style="flex:1; padding:10px; font-family:'Times New Roman', serif; min-width:220px;">
+                            <p style="margin:5px 0;"><b>Ngân Hàng:</b> <?php echo htmlspecialchars($sepay['bank_name']); ?></p>
+                            <p style="margin:5px 0;"><b>Số Tài Khoản:</b> <?php echo htmlspecialchars($sepay['account_no']); ?></p>
+                            <p style="margin:5px 0;"><b>Tên Tài Khoản:</b> <?php echo htmlspecialchars($sepay['account_name']); ?></p>
+                            <p style="margin:5px 0;"><b>Số Tiền:</b> <span id="napAmountDisplay"></span> VNĐ</p>
+                            <p style="margin:5px 0;"><b>Nội Dung:</b> <span id="transferContentDisplay"></span></p>
+                            <span id="actualTransferContent" style="display:none;"></span>
+                            <div style="margin-top:8px;">
+                                <button type="button" onclick="copyToClipboard('<?php echo htmlspecialchars($sepay['account_no']); ?>', 'Số Tài Khoản')" style="background-color:#4CAF50; color:white; padding:5px 10px; border:none; border-radius:4px; cursor:pointer; margin:2px;">Copy Số TK</button>
+                                <button type="button" onclick="copyTransferContent()" style="background-color:#4CAF50; color:white; padding:5px 10px; border:none; border-radius:4px; cursor:pointer; margin:2px;">Copy Nội Dung</button>
+                            </div>
+                        </div>
                     </div>
+                </div>
+                <p style="text-align:center; color:#555; font-size:13px; margin-top:10px;">
+                    Quét mã QR hoặc chuyển khoản đúng <b>số tiền</b> và <b>nội dung</b>. Tiền sẽ được cộng tự động sau vài giây.
+                </p>
+
+<script>
+    var sepayAcc = "<?php echo $sepay['account_no']; ?>";
+    var sepayBank = "<?php echo $sepay['bank_code']; ?>";
+    var currentUser = "<?php echo $_SESSION['username'] ?? 'guest'; ?>";
+    var basePrefix = "<?php echo $sepay['prefix']; ?>";
+
+    function napGetAmount() {
+        var el = document.getElementById('napAmount');
+        return el ? (parseInt(el.value, 10) || 0) : 0;
+    }
+    function updateTransferInfo() {
+        var errEl = document.getElementById('transfer_error');
+        if (!currentUser || currentUser === 'guest') {
+            if (errEl) errEl.innerText = "Vui lòng đăng nhập để lấy nội dung chuyển khoản chính xác.";
+        } else if (errEl) {
+            errEl.innerText = "";
+        }
+        var content = "[" + currentUser + "] " + basePrefix;
+        var amount = napGetAmount();
+        document.getElementById('transferContentDisplay').innerText = content;
+        document.getElementById('actualTransferContent').innerText = content;
+        document.getElementById('napAmountDisplay').innerText = amount.toLocaleString('vi-VN');
+        var qr = "https://qr.sepay.vn/img?acc=" + encodeURIComponent(sepayAcc)
+               + "&bank=" + encodeURIComponent(sepayBank)
+               + "&amount=" + amount
+               + "&des=" + encodeURIComponent(content);
+        document.getElementById('qrCodeImage').src = qr;
+    }
+    window.copyToClipboard = function(text, label) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(function(){ notifyCopied(label, text); },
+                function(){ fallbackCopy(text, label); });
+        } else {
+            fallbackCopy(text, label);
+        }
+    };
+    function fallbackCopy(text, label) {
+        var t = document.createElement("input");
+        t.value = text; document.body.appendChild(t); t.select();
+        try { document.execCommand("copy"); } catch (e) {}
+        document.body.removeChild(t);
+        notifyCopied(label, text);
+    }
+    function notifyCopied(label, text) {
+        if (window.toastr) { toastr.success(label + ': ' + text, 'Đã sao chép!'); }
+        else { alert('Đã copy ' + label + ': ' + text); }
+    }
+    function copyTransferContent() {
+        copyToClipboard(document.getElementById('actualTransferContent').innerText, 'Nội Dung Chuyển Khoản');
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+        updateTransferInfo();
+        var sel = document.getElementById('napAmount');
+        if (sel) sel.addEventListener('change', updateTransferInfo);
+    });
+</script>
                 </div>
             </div>
         </div>
     </div>
-</div>
-
-<script>
-    var currentUser = "<?php echo $_SESSION['username'] ?? 'guest'; ?>";
-    const baseTransferContent = "naptien";
-    function updateTransferInfo() {
-        if (!currentUser || currentUser === 'guest') {
-            document.getElementById('transfer_error').innerText = "Không thể lấy tên tài khoản. Vui lòng đăng nhập lại.";
-            return;
-        }
-
-        const fullTransferContent = `[${currentUser}] ${baseTransferContent}`;
-        
-        document.getElementById('transferContentDisplay').innerText = fullTransferContent;
-        document.getElementById('actualTransferContent').innerText = fullTransferContent;
-        const qrCodeImgElement = document.getElementById('qrCodeImage');
-        const encodedAddInfo = encodeURIComponent(fullTransferContent);
-        qrCodeImgElement.src = `https://api.vietqr.io/image/MB-88408121999-compact.png?accountName=LE%20THE%20THINH`;
-    }
-    function copyToClipboard(text, label) {
-        navigator.clipboard.writeText(text).then(function() {
-            alert(`Đã copy ${label}: ${text}`);
-        }, function(err) {
-            console.error('Không thể copy: ', err);
-            alert('Không thể copy, vui lòng thử lại hoặc copy thủ công.');
-        });
-    }
-    function copyTransferContent() {
-        const textToCopy = document.getElementById('actualTransferContent').innerText;
-        copyToClipboard(textToCopy, 'Nội Dung Chuyển Khoản');
-    }
-    document.addEventListener('DOMContentLoaded', updateTransferInfo);
-</script>
                                                     <br>
                                                     <hr>
                                                     <h3>Lịch Sử Chuyển Khoản</h3>
@@ -403,155 +314,8 @@ include_once '../data_nap_the.php';
                     <script src="/view/static/js/animation.js?v5" type="text/javascript"></script>
                     <script src="/view/static/js/rocket-loader.min.js" data-cf-settings="3248e74b3f0d3f240922716b-|49" defer></script>
                     <script>
-                        $(document).ready(function() {
-                            var activeTab = new URLSearchParams(window.location.search).get('tab') || 'card';
-                            function setActiveRechargeTab(tabId) {
-                                $("#cardSection").hide();
-                                $("#transferSection").hide();
-                                $("#btnCard").removeClass('active-recharge-btn').addClass('inactive-recharge-btn').css({
-                                    "background-color": "#ccc",
-                                    "color": "#000"
-                                });
-                                $("#btnTransfer").removeClass('active-recharge-btn').addClass('inactive-recharge-btn').css({
-                                    "background-color": "#ccc",
-                                    "color": "#000"
-                                });
-
-                                if (tabId === 'card') {
-                                    $("#cardSection").show();
-                                    $("#btnCard").removeClass('inactive-recharge-btn').addClass('active-recharge-btn').css({
-                                        "background-color": "#ff5601",
-                                        "color": "#fff"
-                                    });
-                                } else if (tabId === 'transfer') {
-                                    $("#transferSection").show();
-                                    $("#btnTransfer").removeClass('inactive-recharge-btn').addClass('active-recharge-btn').css({
-                                        "background-color": "#ff5601",
-                                        "color": "#fff"
-                                    });
-                                }
-                                var newUrl = new URL(window.location.href);
-                                newUrl.searchParams.set('tab', tabId);
-                                window.history.replaceState(null, '', newUrl.toString());
-                            }
-                            setActiveRechargeTab(activeTab);
-
-                            $("#btnCard").click(function() {
-                                setActiveRechargeTab('card');
-                            });
-
-                            $("#btnTransfer").click(function() {
-                                setActiveRechargeTab('transfer');
-                            });
-                            var lastPostTimeCardForm = 0;
-                            var minDelayCardForm = 3000;
-
-                            $("#cardPaymentForm").submit(function(event) {
-                                event.preventDefault();
-
-                                var currentTime = Date.now();
-                                if (currentTime - lastPostTimeCardForm < minDelayCardForm) {
-                                    toastr.warning('Vui lòng đợi ' + ((minDelayCardForm - (currentTime - lastPostTimeCardForm)) / 1000).toFixed(1) + ' giây trước khi nạp thẻ tiếp.', 'Khoảng cách quá gần!');
-                                    return;
-                                }
-
-                                $("#comment_error").css("color", "black").text("Đang xử lý...");
-                                var submitButton = $(this).find('input[type="submit"]');
-                                submitButton.prop('disabled', true).val('Đang xử lý...');
-
-                                var csrfToken = $('input[name="csrf_token"]').val();
-                                var formData = $(this).serializeArray();
-                                formData.push({ name: "csrf_token", value: csrfToken });
-
-                                $.ajax({
-                                    url: "/api/Card",
-                                    type: "POST",
-                                    data: formData,
-                                    dataType: "json",
-                                    success: function(response) {
-                                        if (response.success) {
-                                            toastr.success(response.message, 'Thành công!');
-                                            lastPostTimeCardForm = Date.now();
-                                            setTimeout(function() {
-                                                window.location.reload();
-                                            }, 2000);
-                                        } else {
-                                            toastr.error(response.message, 'Lỗi!');
-                                        }
-                                        $("#comment_error").css("color", response.success ? "green" : "red").text(response.message);
-                                    },
-                                    error: function(jqXHR, textStatus, errorThrown) {
-                                        var errorMessage = "Có lỗi xảy ra trong quá trình xử lý. Vui lòng thử lại sau.";
-                                        if (jqXHR.responseJSON && jqXHR.responseJSON.message) {
-                                            errorMessage = jqXHR.responseJSON.message;
-                                        } else if (errorThrown) {
-                                            errorMessage = "Lỗi: " + errorThrown;
-                                        }
-                                        $("#comment_error").css("color", "red").text(errorMessage);
-                                        toastr.error(errorMessage, 'Lỗi hệ thống!');
-                                    },
-                                    complete: function() {
-                                        submitButton.prop('disabled', false).val('Xác Nhận');
-                                    }
-                                });
-                            });
-
-                            window.copyToClipboard = function(text, label) {
-                                var tempInput = document.createElement("input");
-                                tempInput.value = text;
-                                document.body.appendChild(tempInput);
-                                tempInput.select();
-                                document.execCommand("copy");
-                                document.body.removeChild(tempInput);
-                                toastr.success(label + ' đã được sao chép: ' + text, 'Sao chép thành công!');
-                            };
-                            var lastPostTimeLoginRegister = 0;
-                            $("form[name='loginform'], form[name='registerform']").submit(function(event) {
-                                event.preventDefault();
-                                var now = Date.now();
-                                if (now - lastPostTimeLoginRegister < 10000) {
-                                    var secondsLeft = Math.ceil((10000 - (now - lastPostTimeLoginRegister)) / 1000);
-                                    toastr.warning("Bạn chỉ có thể thực hiện hành động này mỗi 10 giây. Vui lòng chờ " + secondsLeft + " giây.");
-                                    return;
-                                }
-
-                                var form = $(this);
-                                var formData = form.serialize();
-                                var action = form.attr("id");
-                                var csrfToken = form.find("input[name='csrf_token']").val();
-
-                                formData += '&csrf_token=' + csrfToken + '&action=' + action;
-
-                                $.ajax({
-                                    url: "/api/card",
-                                    type: "POST",
-                                    data: formData,
-                                    dataType: "json",
-                                    success: function(response) {
-                                        if (response.status === "success") {
-                                            toastr.success(response.message, 'Thành công!');
-                                            lastPostTimeLoginRegister = Date.now();
-                                            if ($("#authModal").length && typeof $.fn.modal === 'function') {
-                                                $("#authModal").modal("hide");
-                                            }
-                                            setTimeout(function() {
-                                                window.location.reload();
-                                            }, 2000);
-                                        } else {
-                                            toastr.error(response.message, 'Lỗi!');
-                                        }
-                                    },
-                                    error: function(jqXHR, textStatus, errorThrown) {
-                                        var errorMessage = "Vui lòng thử lại trong ít phút nữa.";
-                                        if (jqXHR.responseJSON && jqXHR.responseJSON.message) {
-                                            errorMessage = jqXHR.responseJSON.message;
-                                        } else if (errorThrown) {
-                                            errorMessage = "Lỗi: " + errorThrown;
-                                        }
-                                        toastr.error(errorMessage, 'Lỗi hệ thống!');
-                                    }
-                                });
-                            });
+                        $(document).ready(function () {
+                            // Toàn bộ thanh toán được xử lý qua SePay ở phần Nạp Tiền phía trên.
                         });
                     </script>
            </body>
