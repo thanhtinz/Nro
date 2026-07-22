@@ -23,6 +23,13 @@ $__title  = $__title  ?? 'Admin';
         <a href="giftcode.php" class="<?= $__active==='giftcode'?'on':'' ?>">Giftcode</a>
         <a href="notify.php"   class="<?= $__active==='notify'?'on':'' ?>">Thông báo</a>
         <a href="payments.php" class="<?= $__active==='payments'?'on':'' ?>">Nạp thẻ</a>
+        <span class="navsep"></span>
+        <a href="items.php"  class="<?= $__active==='items'?'on':'' ?>">Vật phẩm</a>
+        <a href="bosses.php" class="<?= $__active==='bosses'?'on':'' ?>">Boss/Quái</a>
+        <a href="npcs.php"   class="<?= $__active==='npcs'?'on':'' ?>">NPC</a>
+        <a href="maps.php"   class="<?= $__active==='maps'?'on':'' ?>">Bản đồ</a>
+        <a href="badges.php" class="<?= $__active==='badges'?'on':'' ?>">Danh hiệu</a>
+        <a href="shops.php"  class="<?= $__active==='shops'?'on':'' ?>">Cửa hàng</a>
     </nav>
     <div class="me">
         <span><?= e($_SESSION['admin_username'] ?? '') ?></span>

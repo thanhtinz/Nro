@@ -118,6 +118,15 @@ table.mini input{width:100%;padding:6px 8px}
 a.btn{display:inline-block;text-decoration:none;line-height:1.4}
 a.qbtn{display:inline-block}
 
+/* form nhiều cột (CRUD dữ liệu game) */
+.fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin:4px 0 14px}
+.fitem{display:flex;flex-direction:column;gap:3px}
+.fitem.wide{grid-column:1/-1}
+.fitem label{color:var(--dim);font-size:12px}
+.fitem input,.fitem textarea{width:100%}
+.fitem input[readonly],.fitem textarea[readonly]{opacity:.6;cursor:not-allowed}
+.navsep{width:1px;align-self:stretch;background:var(--line);margin:0 4px}
+
 /* bảng key-value chi tiết nhân vật */
 .kv table{min-width:0}
 .kv th{width:180px;text-transform:none;letter-spacing:0;font-family:ui-monospace,Menlo,Consolas,monospace;color:var(--brand2)}
