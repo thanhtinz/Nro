@@ -90,3 +90,22 @@ td.empty{text-align:center;color:var(--dim);padding:26px}
 .login-card button{margin-top:18px;padding:11px}
 .login-card .hint{color:var(--dim);font-size:12px;text-align:center;margin:14px 0 0}
 .err{background:#3a1a1c;border:1px solid var(--danger);color:#ff9b9e;padding:10px 12px;border-radius:8px;font-size:13px}
+
+/* ---- Form quản lý (giftcode / thông báo / nhân vật) ---- */
+.gc-form{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:14px 0 26px}
+.gc-form h2{margin-top:0}
+.gc-form h3{margin:18px 0 8px;color:var(--brand2);font-size:14px}
+.gc-form label{display:flex;flex-direction:column;gap:5px;color:var(--dim);font-size:13px}
+.gc-form label input,.gc-form label select,.gc-form label textarea{color:var(--txt)}
+.gc-form textarea{background:var(--panel2);border:1px solid var(--line);color:var(--txt);
+    padding:9px 11px;border-radius:8px;font:inherit;resize:vertical;width:100%}
+.gc-form textarea:focus{outline:none;border-color:var(--brand)}
+.gc-form .hint{color:var(--dim);font-size:11px;font-weight:400}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.submit-row{display:flex;align-items:center;gap:14px;margin-top:18px}
+table.items{width:100%;border-collapse:collapse;margin-bottom:10px}
+table.items th{background:var(--panel2);color:var(--dim);font-size:12px;padding:8px 10px;text-align:left}
+table.items td{padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+table.items input{width:100%;min-width:90px}
+table.items .it-name{white-space:normal;min-width:120px}
+a.btn{display:inline-block;text-decoration:none;line-height:1.4}

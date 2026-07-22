@@ -99,6 +99,7 @@ $tok = csrf_token();
         <td><?= $r['task'] !== null ? (int)$r['task'] : '—' ?></td>
         <td class="dim"><?= e($r['create_time']) ?></td>
         <td class="actions">
+            <a class="btn" href="player_edit.php?id=<?= (int)$r['id'] ?>">Chi tiết</a>
             <form method="post">
                 <input type="hidden" name="csrf" value="<?= e($tok) ?>">
                 <input type="hidden" name="q" value="<?= e($q) ?>">

@@ -40,6 +40,8 @@ if ($r = $c->query("SHOW TABLES LIKE 'napthe'")) {
 <div class="quick">
     <a class="qbtn" href="accounts.php">👤 Quản lý tài khoản</a>
     <a class="qbtn" href="players.php">🎮 Quản lý nhân vật</a>
+    <a class="qbtn" href="giftcodes.php">🎁 Quản lý giftcode</a>
+    <a class="qbtn" href="notifications.php">📢 Gửi thông báo</a>
     <a class="qbtn" href="payments.php">💳 Lịch sử nạp thẻ</a>
 </div>
 
