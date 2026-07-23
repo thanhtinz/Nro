@@ -81,6 +81,11 @@ public class Controller implements IMessageHandler {
             player = _session.player;
             byte cmd = _msg.command;
             switch (cmd) {
+                case -106: // Mở hòm thư (nút web-admin gói quà) — client gửi Message(-106)
+                    if (player != null) {
+                        GiftPackageService.openMailbox(player);
+                    }
+                    break;
                 case -100:
                     if (player == null) {
                         return;
