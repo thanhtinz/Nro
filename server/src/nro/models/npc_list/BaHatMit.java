@@ -324,8 +324,11 @@ public class BaHatMit extends Npc {
                         switch (select) {
                             case 0:
                                 if (DailyGiftService.checkDailyGift(player, ConstDailyGift.NHAN_BUA_MIEN_PHI)) {
-                                    int idItem = Util.nextInt(213, 219);
-                                    player.charms.addTimeCharms(idItem, 60);
+                                    // Phúc lợi cấu hình từ web (bảng daily_gift_reward); trống -> dùng mặc định cũ
+                                    int[] gift = nro.models.daily_Giftcode.DailyGiftConfig.getRandom();
+                                    int idItem = gift != null ? gift[0] : Util.nextInt(213, 219);
+                                    int duration = gift != null ? gift[1] : 60;
+                                    player.charms.addTimeCharms(idItem, duration);
                                     Item bua = ItemService.gI().createNewItem((short) idItem);
                                     Service.gI().sendThongBao(player, "Bạn vừa nhận thưởng " + bua.template.name);
                                     DailyGiftService.updateDailyGift(player, ConstDailyGift.NHAN_BUA_MIEN_PHI);

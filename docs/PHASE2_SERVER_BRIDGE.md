@@ -63,6 +63,13 @@ chạy đúng giờ, **mỗi lịch 1 lần/ngày** (cột `last_run`). Hành đ
 `reset_rank`, `event_on`/`event_off` (params = tên sự kiện), `maintenance`.
 Bật/tắt sự kiện qua lịch sẽ cập nhật `server_config` để đồng bộ.
 
+## Phúc lợi — quà bùa miễn phí (`daily_gift_reward`)
+
+Kho bùa miễn phí hằng ngày (NPC Bà Hạt Mít). WebControlService nạp các dòng `enabled=1`
+vào `DailyGiftConfig` mỗi ~3 giây; `BaHatMit.java` bốc ngẫu nhiên từ kho (fallback về mặc định
+cũ `213–219 / 60 phút` nếu kho trống). Admin chỉnh bảng ở trang **Phúc lợi** → **có hiệu lực ngay,
+không cần restart**. (File liên quan: `daily_Giftcode/DailyGiftConfig.java`, sửa nhỏ trong `npc_list/BaHatMit.java`.)
+
 ## Kiểm tra hoạt động
 - Vào admin → **⚙ Server**: nếu thẻ "Trạng thái server" hiện 🟢 Online nghĩa là server đang gửi heartbeat (cầu nối chạy tốt).
 - Gửi thử lệnh "Gửi thông báo" — trong ít giây trạng thái lệnh chuyển sang **Xong** và người chơi thấy thông báo.
