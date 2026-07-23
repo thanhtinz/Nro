@@ -9,7 +9,7 @@ Cập nhật theo tiến độ. ✅ = đã có trong panel, ⏳ = cần làm th�
 - ✅ Giftcode: tạo/xoá + phần thưởng (cũng là cách cấp vật phẩm)
 
 ## Dữ liệu game (trang riêng, gom ở hub **Dữ liệu game**)
-Cửa hàng: **sửa là áp dụng ngay** (server tự nạp lại `SHOPS`, không restart). Các template khác: sửa DB, áp dụng khi server nạp lại dữ liệu.
+**Sửa là áp dụng ngay, không restart** (hot-reload) cho: vật phẩm, option, quái/boss, NPC, nội tại, danh hiệu, cửa hàng. Các template còn lại (kỹ năng, nhiệm vụ, bản đồ, đồ nền/avatar/part/huy hiệu): sửa DB ngay, áp dụng khi server nạp lại dữ liệu (bổ sung vào `reloadTemplatesFromWeb()` được).
 - ✅ Vật phẩm (`item_template`), Option vật phẩm (`item_option_template`), Đồ nền (`bg_item_template`), Avatar đầu (`head_avatar`)
 - ✅ **Cửa hàng LIVE**: `shop`, `tab_shop`, `item_shop`, shop ký gửi (`shop_ky_gui`)
 - ✅ Quái/Boss (`mob_template`), NPC (`npc_template`), Bản đồ (`map_template`)

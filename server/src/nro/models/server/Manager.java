@@ -1025,6 +1025,144 @@ public final class Manager {
         return tops;
     }
 
+    /**
+     * Nạp lại các template cốt lõi từ DB khi admin sửa (config-sync, không restart).
+     * Giữ nguyên loadDatabase() để khởi động không bị ảnh hưởng; hàm này chạy độc lập,
+     * dựng list tạm rồi thay nội dung (thu hẹp thời điểm ghi) và được bọc try/catch.
+     * Phạm vi: item_template, item_option_template, mob_template, npc_template,
+     * intrinsic, achievement_template, shop (đủ cho cân bằng vật phẩm/quái/nội tại/shop).
+     */
+    public static synchronized void reloadTemplatesFromWeb() {
+        try (Connection con = LocalManager.getConnection()) {
+            // item_template
+            List<ItemTemplate> items = new ArrayList<>();
+            try (PreparedStatement ps = con.prepareStatement("select * from item_template");
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    ItemTemplate t = new ItemTemplate();
+                    t.id = rs.getShort("id");
+                    t.type = rs.getByte("type");
+                    t.gender = rs.getByte("gender");
+                    t.name = rs.getString("name");
+                    t.description = rs.getString("description");
+                    t.level = rs.getByte("level");
+                    t.iconID = rs.getShort("icon_id");
+                    t.part = rs.getShort("part");
+                    t.isUpToUp = rs.getBoolean("is_up_to_up");
+                    t.strRequire = rs.getInt("power_require");
+                    t.gold = rs.getInt("gold");
+                    t.gem = rs.getInt("gem");
+                    t.head = rs.getInt("head");
+                    t.body = rs.getInt("body");
+                    t.leg = rs.getInt("leg");
+                    items.add(t);
+                }
+            }
+            ITEM_TEMPLATES.clear();
+            ITEM_TEMPLATES.addAll(items);
+
+            // item_option_template
+            List<ItemOptionTemplate> opts = new ArrayList<>();
+            try (PreparedStatement ps = con.prepareStatement("select id, name from item_option_template");
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    ItemOptionTemplate o = new ItemOptionTemplate();
+                    o.id = rs.getInt("id");
+                    o.name = rs.getString("name");
+                    opts.add(o);
+                }
+            }
+            ITEM_OPTION_TEMPLATES.clear();
+            ITEM_OPTION_TEMPLATES.addAll(opts);
+
+            // mob_template
+            List<MobTemplate> mobs = new ArrayList<>();
+            try (PreparedStatement ps = con.prepareStatement("select * from mob_template");
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    MobTemplate m = new MobTemplate();
+                    m.id = rs.getByte("id");
+                    m.type = rs.getByte("type");
+                    m.name = rs.getString("name");
+                    m.hp = rs.getInt("hp");
+                    m.rangeMove = rs.getByte("range_move");
+                    m.speed = rs.getByte("speed");
+                    m.dartType = rs.getByte("dart_type");
+                    m.percentDame = rs.getByte("percent_dame");
+                    m.percentTiemNang = rs.getByte("percent_tiem_nang");
+                    mobs.add(m);
+                }
+            }
+            MOB_TEMPLATES.clear();
+            MOB_TEMPLATES.addAll(mobs);
+
+            // npc_template
+            List<NpcTemplate> npcs = new ArrayList<>();
+            try (PreparedStatement ps = con.prepareStatement("select * from npc_template");
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    NpcTemplate n = new NpcTemplate();
+                    n.id = rs.getByte("id");
+                    n.name = rs.getString("name");
+                    n.head = rs.getShort("head");
+                    n.body = rs.getShort("body");
+                    n.leg = rs.getShort("leg");
+                    n.avatar = rs.getInt("avatar");
+                    npcs.add(n);
+                }
+            }
+            NPC_TEMPLATES.clear();
+            NPC_TEMPLATES.addAll(npcs);
+
+            // intrinsic
+            List<Intrinsic> td = new ArrayList<>(), nm = new ArrayList<>(), xd = new ArrayList<>();
+            try (PreparedStatement ps = con.prepareStatement("select * from intrinsic");
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Intrinsic in = new Intrinsic();
+                    in.id = rs.getByte("id");
+                    in.name = rs.getString("name");
+                    in.paramFrom1 = rs.getShort("param_from_1");
+                    in.paramTo1 = rs.getShort("param_to_1");
+                    in.paramFrom2 = rs.getShort("param_from_2");
+                    in.paramTo2 = rs.getShort("param_to_2");
+                    in.icon = rs.getShort("icon");
+                    in.gender = rs.getByte("gender");
+                    switch (in.gender) {
+                        case ConstPlayer.TRAI_DAT -> td.add(in);
+                        case ConstPlayer.NAMEC -> nm.add(in);
+                        case ConstPlayer.XAYDA -> xd.add(in);
+                        default -> { td.add(in); nm.add(in); xd.add(in); }
+                    }
+                }
+            }
+            INTRINSIC_TD.clear(); INTRINSIC_TD.addAll(td);
+            INTRINSIC_NM.clear(); INTRINSIC_NM.addAll(nm);
+            INTRINSIC_XD.clear(); INTRINSIC_XD.addAll(xd);
+
+            // achievement_template
+            List<AchievementTemplate> achs = new ArrayList<>();
+            try (PreparedStatement ps = con.prepareStatement("select * from achievement_template");
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    achs.add(new AchievementTemplate(rs.getString("info1"), rs.getString("info2"),
+                            rs.getInt("money"), rs.getLong("max_count")));
+                }
+            }
+            ACHIEVEMENT_TEMPLATE.clear();
+            ACHIEVEMENT_TEMPLATE.addAll(achs);
+
+            // shop
+            SHOPS = ShopDAO.getShops(con);
+
+            Logger.success("[WebAdmin] reload templates: item=" + ITEM_TEMPLATES.size()
+                    + " mob=" + MOB_TEMPLATES.size() + " npc=" + NPC_TEMPLATES.size()
+                    + " shop=" + SHOPS.size() + "\n");
+        } catch (Exception e) {
+            Logger.error("reloadTemplatesFromWeb: " + e.getMessage() + "\n");
+        }
+    }
+
     public void loadProperties() throws IOException {
         Properties properties = new Properties();
         properties.load(new FileInputStream("Config.properties"));

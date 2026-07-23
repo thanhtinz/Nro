@@ -45,7 +45,7 @@ public class WebControlService extends Thread {
         "HALLOWEEN", "HUNG_VUONG", "TRUNG_THU", "TOP_UP"
     };
     private static final String[] TRIGGERS = {
-        "do_reset_boss", "do_reset_rank", "do_restart", "notify_seq", "do_reload_shop"
+        "do_reset_boss", "do_reset_rank", "do_restart", "notify_seq", "do_reload_shop", "do_reload_data"
     };
 
     private WebControlService() {
@@ -171,6 +171,9 @@ public class WebControlService extends Thread {
                     Manager.SHOPS = ShopDAO.getShops(con);
                     Logger.success("[WebAdmin] Nạp lại shop (" + Manager.SHOPS.size() + ")\n");
                 }
+                break;
+            case "do_reload_data":
+                Manager.reloadTemplatesFromWeb();
                 break;
         }
     }

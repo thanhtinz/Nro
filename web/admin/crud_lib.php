@@ -75,7 +75,7 @@ function crud_page(array $cfg): void
             $id = $_POST['pk'] ?? '';
             $stmt = $c->prepare("DELETE FROM `$table` WHERE `$pk` = ? LIMIT 1");
             $stmt->bind_param('s', $id); $stmt->execute(); $stmt->close();
-            if (!empty($cfg['reload'])) crud_signal_reload($c, $cfg['reload']);
+            crud_signal_reload($c, 'data'); if (!empty($cfg['reload'])) crud_signal_reload($c, $cfg['reload']);
             flash("Đã xoá #$id.");
             header("Location: $back"); exit();
         }
@@ -108,7 +108,7 @@ function crud_page(array $cfg): void
             } catch (Throwable $ex) {
                 flash('Lỗi: ' . $ex->getMessage());
             }
-            if (!empty($cfg['reload'])) crud_signal_reload($c, $cfg['reload']);
+            crud_signal_reload($c, 'data'); if (!empty($cfg['reload'])) crud_signal_reload($c, $cfg['reload']);
             header("Location: $back"); exit();
         }
     }
