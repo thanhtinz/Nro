@@ -42,6 +42,56 @@ INSERT IGNORE INTO `server_status` (`sv_key`, `sv_value`) VALUES
   ('online_players', '0'), ('rate_exp', '1'), ('maintenance', '0'),
   ('last_heartbeat', '0'), ('uptime', '0'), ('events', '');
 
+-- ===== Gói quà (gửi qua hộp quà tới toàn bộ người chơi) =====
+-- Gói quà đã lưu (mẫu tái dùng)
+CREATE TABLE IF NOT EXISTS `gift_package` (
+  `id`           INT(11) NOT NULL AUTO_INCREMENT,
+  `name`         VARCHAR(100) NOT NULL,          -- tên gói (admin dễ nhớ)
+  `mail_title`   VARCHAR(150) NOT NULL,          -- tiêu đề mail
+  `mail_content` VARCHAR(1000) NOT NULL,         -- nội dung mail
+  `created_at`   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Item trong gói (item_id: -1=vàng, -2=ngọc, -3=ngọc khoá; >=0 = item template id)
+CREATE TABLE IF NOT EXISTS `gift_package_item` (
+  `id`           INT(11) NOT NULL AUTO_INCREMENT,
+  `package_id`   INT(11) NOT NULL,
+  `item_id`      INT(11) NOT NULL,
+  `quantity`     INT(11) NOT NULL DEFAULT 1,
+  `option_id`    INT(11) DEFAULT NULL,
+  `option_param` INT(11) DEFAULT 0,
+  PRIMARY KEY (`id`), KEY `idx_pkg` (`package_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Lượt gửi (snapshot khi bấm Gửi) — server đọc & phát cho người chơi online
+CREATE TABLE IF NOT EXISTS `gift_mail` (
+  `id`         INT(11) NOT NULL AUTO_INCREMENT,
+  `title`      VARCHAR(150) NOT NULL,
+  `content`    VARCHAR(1000) NOT NULL,
+  `enabled`    TINYINT(1) NOT NULL DEFAULT 1,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `gift_mail_item` (
+  `id`           INT(11) NOT NULL AUTO_INCREMENT,
+  `mail_id`      INT(11) NOT NULL,
+  `item_id`      INT(11) NOT NULL,
+  `quantity`     INT(11) NOT NULL DEFAULT 1,
+  `option_id`    INT(11) DEFAULT NULL,
+  `option_param` INT(11) DEFAULT 0,
+  PRIMARY KEY (`id`), KEY `idx_mail` (`mail_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Đã nhận (mỗi người 1 lần / mỗi lượt gửi)
+CREATE TABLE IF NOT EXISTS `gift_mail_received` (
+  `mail_id`     INT(11) NOT NULL,
+  `player_id`   INT(11) NOT NULL,
+  `received_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`mail_id`, `player_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- Danh sách máy chủ hiển thị cho người chơi khi đăng nhập (server tự áp dụng vào DataGame.LINK_IP_PORT).
 -- Lưu ý: đây chỉ là ENTRY danh sách; tiến trình game của máy chủ mới phải deploy/chạy riêng.
 CREATE TABLE IF NOT EXISTS `server_list` (

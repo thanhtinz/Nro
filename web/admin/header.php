@@ -21,6 +21,7 @@ $__title  = $__title  ?? 'Admin';
         <a href="accounts.php" class="<?= $__active==='accounts'?'on':'' ?>">Tài khoản</a>
         <a href="players.php"  class="<?= $__active==='players'?'on':'' ?>">Nhân vật</a>
         <a href="giftcode.php" class="<?= $__active==='giftcode'?'on':'' ?>">Giftcode</a>
+        <a href="giftpackage.php" class="<?= $__active==='giftpackage'?'on':'' ?>">Gói quà</a>
         <a href="notify.php"   class="<?= $__active==='notify'?'on':'' ?>">Thông báo</a>
         <a href="payments.php" class="<?= $__active==='payments'?'on':'' ?>">Nạp thẻ</a>
         <a href="data.php"     class="<?= $__active==='data'?'on':'' ?>">Dữ liệu game</a>

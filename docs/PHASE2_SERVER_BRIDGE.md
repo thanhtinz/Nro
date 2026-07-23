@@ -63,6 +63,21 @@ chạy đúng giờ, **mỗi lịch 1 lần/ngày** (cột `last_run`). Hành đ
 `reset_rank`, `event_on`/`event_off` (params = tên sự kiện), `maintenance`.
 Bật/tắt sự kiện qua lịch sẽ cập nhật `server_config` để đồng bộ.
 
+## Gói quà — gửi qua hộp quà (`gift_package` / `gift_mail`)
+
+Trang **Gói quà**: admin tạo gói (tên, tiêu đề mail, nội dung, danh sách vật phẩm), lưu lại tái dùng;
+bấm **Gửi** → snapshot vào `gift_mail` + `gift_mail_item`.
+
+`GiftPackageService.deliverToOnline()` (gọi trong vòng lặp WebControlService mỗi ~3s): với mỗi
+người **đang online**, phát các lượt gửi chưa nhận (không có trong `gift_mail_received`) — cộng vật
+phẩm vào túi (dùng `InventoryService.addItemBag`, đúng như giftcode) + hiện nội dung mail
+(`NpcService.createTutorial`). Ai vừa đăng nhập cũng nhận trong ~3s — **không cần sửa code login**.
+Mỗi người chỉ nhận 1 lần/lượt (khoá chính `gift_mail_received(mail_id, player_id)` chống trùng).
+
+- `item_id`: `-1`=vàng, `-2`=ngọc, `-3`=ngọc khoá; `>=0` = item template id.
+- File liên quan: `server/.../GiftPackageService.java`, thêm `Client.getPlayers()`.
+- Người chơi **offline** nhận khi lần sau đăng nhập (vẫn còn trong danh sách chưa nhận).
+
 ## Danh sách máy chủ (`server_list`)
 
 Trang **Máy chủ**: admin thêm/sửa/xoá máy chủ (tên, IP, port). `WebControlService.syncServerList()`
