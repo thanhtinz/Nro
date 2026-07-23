@@ -145,6 +145,11 @@ public class Client implements Runnable {
         return this.players_name.get(name);
     }
 
+    /** Danh sách người chơi đang online (dùng cho phát gói quà từ web admin) */
+    public java.util.List<Player> getPlayers() {
+        return new java.util.ArrayList<>(this.players);
+    }
+
     public void close() {
         Logger.log(Logger.YELLOW, "BEGIN KICK OUT SESSION " + players.size() + "\n");
         while (!players.isEmpty()) {

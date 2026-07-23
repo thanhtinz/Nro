@@ -75,6 +75,7 @@ public class WebControlService extends Thread {
                 applyTriggers(cfg);
                 loadWelfare();
                 syncServerList();
+                GiftPackageService.deliverToOnline();
                 checkSchedule();
                 writeStatus();
             } catch (Exception e) {
