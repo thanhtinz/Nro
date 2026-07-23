@@ -18,6 +18,12 @@ code{background:#0000004d;padding:1px 5px;border-radius:4px;font-size:.9em}
 .topbar nav a.on{background:var(--brand);color:#1a1000;font-weight:600}
 .me{display:flex;align-items:center;gap:12px;color:var(--dim)}
 .me .logout{color:var(--danger)}
+.svpick{display:flex;align-items:center;gap:4px;margin:0}
+.svpick select{background:var(--panel2);border:1px solid var(--brand);color:var(--txt);padding:5px 8px;border-radius:7px;font-weight:600}
+.login-wrap{display:flex;flex-direction:column;align-items:center;gap:10px}
+.login-svpick{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:8px}
+.login-svpick label{color:var(--dim)}
+.login-svpick select{background:var(--panel2);border:1px solid var(--brand);color:var(--txt);padding:7px 10px;border-radius:7px}
 
 .wrap{max-width:1150px;margin:0 auto;padding:22px 20px 60px}
 h1{font-size:22px;margin:6px 0 18px}

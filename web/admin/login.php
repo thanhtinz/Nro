@@ -49,8 +49,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <link rel="stylesheet" href="style.css">
 </head>
 <body class="login-body">
+<div class="login-wrap">
+<?php $__servers = admin_servers(); $__curKey = admin_current_key(); if (count($__servers) > 1): ?>
+<form method="post" class="login-svpick">
+    <label>Máy chủ</label>
+    <select name="__switch_sv" onchange="this.form.submit()">
+        <?php foreach ($__servers as $s): ?>
+            <option value="<?= e($s['key']) ?>" <?= $s['key']===$__curKey?'selected':'' ?>><?= e($s['name']) ?></option>
+        <?php endforeach; ?>
+    </select>
+</form>
+<?php endif; ?>
 <form class="login-card" method="post" autocomplete="off">
     <div class="login-logo">🐉 NRO Admin</div>
+    <div class="dim" style="text-align:center;margin-bottom:8px">Máy chủ: <b><?= e(admin_current_server()['name']) ?></b></div>
     <?php if ($error): ?><div class="err"><?= e($error) ?></div><?php endif; ?>
     <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
     <label>Tài khoản admin</label>
@@ -60,5 +72,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <button type="submit">Đăng nhập</button>
     <p class="hint">Chỉ tài khoản có <code>admin=1</code> hoặc <code>is_admin=1</code> mới vào được.</p>
 </form>
+</div>
 </body>
 </html>

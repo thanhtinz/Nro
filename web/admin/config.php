@@ -13,18 +13,36 @@ if (session_status() === PHP_SESSION_NONE) {
 
 date_default_timezone_set('Asia/Ho_Chi_Minh');
 
-// Kết nối DB dùng lại của web (định nghĩa $conn = mysqli)
-require_once __DIR__ . '/../connect.php';
-if (!isset($conn) || $conn->connect_error) {
-    die('Lỗi kết nối cơ sở dữ liệu.');
+require_once __DIR__ . '/servers_store.php';
+
+// Chuyển máy chủ đang quản lý (từ bộ chọn trên header)
+if (isset($_POST['__switch_sv'])) {
+    if (admin_server_by_key((string)$_POST['__switch_sv'])) {
+        $_SESSION['admin_sv'] = (string)$_POST['__switch_sv'];
+    }
+    header('Location: ' . ($_SERVER['REQUEST_URI'] ?? 'index.php'));
+    exit();
+}
+
+// Kết nối DB của máy chủ đang chọn
+$__sv = admin_current_server();
+$conn = @new mysqli($__sv['host'], $__sv['user'], $__sv['pass'], $__sv['dbname']);
+if ($conn->connect_error) {
+    die('Lỗi kết nối DB máy chủ "' . htmlspecialchars($__sv['name'], ENT_QUOTES) . '": ' . htmlspecialchars($conn->connect_error, ENT_QUOTES));
 }
 $conn->set_charset('utf8mb4');
 
-/** Trả về đối tượng mysqli */
+/** Trả về đối tượng mysqli (của máy chủ đang chọn) */
 function db(): mysqli
 {
     global $conn;
     return $conn;
+}
+
+/** Thông tin máy chủ đang chọn */
+function current_server(): array
+{
+    return admin_current_server();
 }
 
 /** Escape output chống XSS */
