@@ -35,7 +35,8 @@ INSERT IGNORE INTO `server_config` (`cfg_key`, `cfg_value`) VALUES
   ('notify_seq', '0'),
   ('do_reset_boss', '0'),
   ('do_reset_rank', '0'),
-  ('do_restart', '0');
+  ('do_restart', '0'),
+  ('do_reload_shop', '0');
 
 INSERT IGNORE INTO `server_status` (`sv_key`, `sv_value`) VALUES
   ('online_players', '0'), ('rate_exp', '1'), ('maintenance', '0'),

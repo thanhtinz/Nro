@@ -9,6 +9,21 @@
  */
 require_once __DIR__ . '/config.php';
 
+/** Báo cho server nạp lại (config-sync): bump 1 khoá do_reload_* = thời gian hiện tại */
+function crud_signal_reload(mysqli $c, string $what): void
+{
+    // chỉ bump nếu đã cài cầu nối (bảng server_config tồn tại)
+    $r = $c->query("SELECT 1 FROM information_schema.tables
+                     WHERE table_schema = DATABASE() AND table_name = 'server_config' LIMIT 1");
+    if (!$r || !$r->num_rows) return;
+    $key = 'do_reload_' . $what;
+    $val = (string)time();
+    $stmt = $c->prepare('INSERT INTO server_config (cfg_key, cfg_value) VALUES (?, ?)
+                         ON DUPLICATE KEY UPDATE cfg_value = VALUES(cfg_value)');
+    $stmt->bind_param('ss', $key, $val);
+    $stmt->execute(); $stmt->close();
+}
+
 /** Lấy cột thật của bảng: [ten => kieu] */
 function crud_columns(mysqli $c, string $table): array
 {
@@ -60,6 +75,7 @@ function crud_page(array $cfg): void
             $id = $_POST['pk'] ?? '';
             $stmt = $c->prepare("DELETE FROM `$table` WHERE `$pk` = ? LIMIT 1");
             $stmt->bind_param('s', $id); $stmt->execute(); $stmt->close();
+            if (!empty($cfg['reload'])) crud_signal_reload($c, $cfg['reload']);
             flash("Đã xoá #$id.");
             header("Location: $back"); exit();
         }
@@ -92,6 +108,7 @@ function crud_page(array $cfg): void
             } catch (Throwable $ex) {
                 flash('Lỗi: ' . $ex->getMessage());
             }
+            if (!empty($cfg['reload'])) crud_signal_reload($c, $cfg['reload']);
             header("Location: $back"); exit();
         }
     }
