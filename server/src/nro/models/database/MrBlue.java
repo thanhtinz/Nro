@@ -75,6 +75,11 @@ public class MrBlue {
             Service.gI().sendLoginFail(session, false);
             return null;
         }
+        if (centralAuth == CentralAuth.UNVERIFIED) {
+            Service.gI().sendThongBaoOK(session, "Tài khoản chưa xác minh email. Vui lòng kiểm tra hộp thư hoặc vào website để gửi lại mail xác minh");
+            Service.gI().sendLoginFail(session, false);
+            return null;
+        }
         if (centralAuth == CentralAuth.OK) {
             CentralAuth.syncLocalAccount(session.uu, session.pp);
         }
