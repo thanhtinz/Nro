@@ -17,8 +17,8 @@ Cửa hàng: **sửa là áp dụng ngay** (server tự nạp lại `SHOPS`, kh�
 - ✅ Danh hiệu (`achievement_template`), Huy hiệu (`data_badges`)
 - ✅ Bang hội (`clan`)
 - ✅ Forum: bài (`posts`), bình luận (`comments`), phòng chat (`phongchat`)
-- ⏳ Kỹ năng (`skill_template`) — khoá kép `(nclass_id,id)`, cần trang riêng
-- ⏳ Nội tại (`intrinsic`), bộ phận (`part`) — bảng không có khoá chính đơn, cần trang riêng
+- ✅ Kỹ năng (`skill_template`) — trang riêng theo class (khoá kép `nclass_id,id`)
+- ✅ Nội tại (`intrinsic`), Bộ phận (`part`)
 
 ## Điều khiển server (runtime — config-sync, chỉnh là server tự áp dụng)
 - ✅ Hệ số EXP (`rate_exp`) — chỉnh giá trị
