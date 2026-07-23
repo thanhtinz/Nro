@@ -211,6 +211,6 @@ function itemName($id){ return $id==-1?'Vàng':($id==-2?'Ngọc':($id==-3?'Ngọ
     </tbody>
     </table>
     </div>
-    <p class="dim">Ai đang online nhận trong ~3 giây; người khác nhận ngay khi đăng nhập. Mỗi người chỉ nhận 1 lần / lượt gửi. Vật phẩm vào thẳng túi + hiện thông báo nội dung mail.</p>
+    <p class="dim">Người chơi online sẽ được tự mở <b>Hòm thư</b> trong game (nhắc tối đa mỗi 2 phút); người khác thấy khi đăng nhập. Họ <b>mở thư đọc nội dung → bấm "Nhận quà"</b> thì vật phẩm mới vào túi. Mỗi người chỉ nhận 1 lần / lượt gửi.</p>
 <?php endif; ?>
 <?php require_once __DIR__ . '/footer.php'; ?>
