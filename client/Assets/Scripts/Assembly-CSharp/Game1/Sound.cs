@@ -1,4 +1,3 @@
-using Game2;
 using System.Threading;
 using UnityEngine;
 
