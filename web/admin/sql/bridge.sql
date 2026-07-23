@@ -42,6 +42,19 @@ INSERT IGNORE INTO `server_status` (`sv_key`, `sv_value`) VALUES
   ('online_players', '0'), ('rate_exp', '1'), ('maintenance', '0'),
   ('last_heartbeat', '0'), ('uptime', '0'), ('events', '');
 
+-- Danh sách máy chủ hiển thị cho người chơi khi đăng nhập (server tự áp dụng vào DataGame.LINK_IP_PORT).
+-- Lưu ý: đây chỉ là ENTRY danh sách; tiến trình game của máy chủ mới phải deploy/chạy riêng.
+CREATE TABLE IF NOT EXISTS `server_list` (
+  `id`      INT(11) NOT NULL AUTO_INCREMENT,
+  `name`    VARCHAR(50)  NOT NULL,
+  `ip`      VARCHAR(100) NOT NULL,
+  `port`    INT(11)      NOT NULL,
+  `enabled` TINYINT(1)   NOT NULL DEFAULT 1,
+  `sort`    INT(11)      NOT NULL DEFAULT 0,
+  `note`    VARCHAR(255) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- Phúc lợi: kho quà bùa miễn phí hằng ngày (Bà Hạt Mít). Server bốc ngẫu nhiên 1 dòng enabled.
 CREATE TABLE IF NOT EXISTS `daily_gift_reward` (
   `id`           INT(11) NOT NULL AUTO_INCREMENT,

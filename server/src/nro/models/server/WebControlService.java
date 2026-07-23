@@ -16,6 +16,7 @@ import nro.models.boss.Boss_Manager.BossManager;
 import nro.models.services.Service;
 import nro.models.event.EventManager;
 import nro.models.daily_Giftcode.DailyGiftConfig;
+import nro.models.data.DataGame;
 import nro.models.utils.Logger;
 
 /**
@@ -73,6 +74,7 @@ public class WebControlService extends Thread {
                 applySettings(cfg);
                 applyTriggers(cfg);
                 loadWelfare();
+                syncServerList();
                 checkSchedule();
                 writeStatus();
             } catch (Exception e) {
@@ -175,6 +177,29 @@ public class WebControlService extends Thread {
             case "do_reload_data":
                 Manager.reloadTemplatesFromWeb();
                 break;
+        }
+    }
+
+    /**
+     * Đồng bộ danh sách máy chủ hiển thị cho người chơi từ bảng server_list.
+     * Nếu bảng có dòng enabled -> ghi đè DataGame.LINK_IP_PORT (định dạng name:ip:port:0,...).
+     * Nếu trống -> giữ nguyên giá trị nạp từ Config.properties.
+     */
+    private void syncServerList() throws Exception {
+        StringBuilder sb = new StringBuilder();
+        try (Connection con = LocalManager.getConnection();
+             PreparedStatement ps = con.prepareStatement(
+                     "SELECT name, ip, port FROM server_list WHERE enabled = 1 ORDER BY sort, id");
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                if (sb.length() > 0) sb.append(',');
+                sb.append(rs.getString("name")).append(':')
+                  .append(rs.getString("ip")).append(':')
+                  .append(rs.getInt("port")).append(":0");
+            }
+        }
+        if (sb.length() > 0) {
+            DataGame.LINK_IP_PORT = sb.toString();
         }
     }
 

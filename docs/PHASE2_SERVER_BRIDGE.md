@@ -63,6 +63,15 @@ chạy đúng giờ, **mỗi lịch 1 lần/ngày** (cột `last_run`). Hành đ
 `reset_rank`, `event_on`/`event_off` (params = tên sự kiện), `maintenance`.
 Bật/tắt sự kiện qua lịch sẽ cập nhật `server_config` để đồng bộ.
 
+## Danh sách máy chủ (`server_list`)
+
+Trang **Máy chủ**: admin thêm/sửa/xoá máy chủ (tên, IP, port). `WebControlService.syncServerList()`
+đọc mỗi ~3 giây và ghi đè `DataGame.LINK_IP_PORT` (định dạng `name:ip:port:0,...`) → người chơi thấy
+danh sách mới **ngay khi đăng nhập, không restart**. Bảng trống → game dùng danh sách từ `Config.properties`.
+
+> ⚠️ Đây chỉ là **entry danh sách**. Tiến trình game của máy chủ mới (JVM riêng, port riêng, DB riêng)
+> phải **deploy & chạy riêng** — web không tự khởi chạy process được.
+
 ## Hot-reload template (`do_reload_data`)
 
 Khi admin sửa bất kỳ trang **Dữ liệu game**, `crud_lib` bump `server_config.do_reload_data`.
