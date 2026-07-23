@@ -40,3 +40,16 @@ INSERT IGNORE INTO `server_config` (`cfg_key`, `cfg_value`) VALUES
 INSERT IGNORE INTO `server_status` (`sv_key`, `sv_value`) VALUES
   ('online_players', '0'), ('rate_exp', '1'), ('maintenance', '0'),
   ('last_heartbeat', '0'), ('uptime', '0'), ('events', '');
+
+-- Lịch hoạt động: admin đặt giờ + hành động; server tự chạy mỗi ngày
+CREATE TABLE IF NOT EXISTS `server_schedule` (
+  `id`       INT(11) NOT NULL AUTO_INCREMENT,
+  `run_time` CHAR(5)      NOT NULL,            -- 'HH:MM' (giờ VN)
+  `action`   VARCHAR(30)  NOT NULL,            -- notify, reset_boss, reset_rank, event_on, event_off, maintenance
+  `params`   VARCHAR(500) DEFAULT NULL,        -- vd nội dung thông báo, hoặc tên sự kiện
+  `enabled`  TINYINT(1)   NOT NULL DEFAULT 1,
+  `last_run` DATE         DEFAULT NULL,         -- ngày chạy gần nhất (server ghi)
+  `note`     VARCHAR(255) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_enabled_time` (`enabled`, `run_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -3,6 +3,9 @@ package nro.models.server;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import nro.models.data.LocalManager;
@@ -65,6 +68,7 @@ public class WebControlService extends Thread {
                 Map<String, String> cfg = readConfig();
                 applySettings(cfg);
                 applyTriggers(cfg);
+                checkSchedule();
                 writeStatus();
             } catch (Exception e) {
                 Logger.error("WebControlService loop error: " + e.getMessage() + "\n");
@@ -157,6 +161,77 @@ public class WebControlService extends Thread {
                     Logger.success("[WebAdmin] Thông báo: " + text + "\n");
                 }
                 break;
+        }
+    }
+
+    /** Kiểm tra lịch hoạt động: chạy hành động đúng giờ, mỗi ngày 1 lần */
+    private void checkSchedule() throws Exception {
+        String nowHm = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"));
+        String today = LocalDate.now().toString();
+        try (Connection con = LocalManager.getConnection()) {
+            java.util.List<int[]> ran = new java.util.ArrayList<>();
+            try (PreparedStatement ps = con.prepareStatement(
+                    "SELECT id, action, params FROM server_schedule "
+                    + "WHERE enabled = 1 AND run_time = ? AND (last_run IS NULL OR last_run <> ?)")) {
+                ps.setString(1, nowHm);
+                ps.setString(2, today);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        int id = rs.getInt("id");
+                        try {
+                            fireScheduleAction(con, rs.getString("action"), rs.getString("params"));
+                            Logger.success("[WebAdmin] Lịch #" + id + " chạy: " + rs.getString("action") + "\n");
+                        } catch (Exception ex) {
+                            Logger.error("Lịch #" + id + " lỗi: " + ex.getMessage() + "\n");
+                        }
+                        ran.add(new int[]{id});
+                    }
+                }
+            }
+            for (int[] r : ran) {
+                try (PreparedStatement up = con.prepareStatement(
+                        "UPDATE server_schedule SET last_run = ? WHERE id = ?")) {
+                    up.setString(1, today);
+                    up.setInt(2, r[0]);
+                    up.executeUpdate();
+                }
+            }
+        }
+    }
+
+    /** Thực thi 1 hành động theo lịch (setting -> ghi config để đồng bộ) */
+    private void fireScheduleAction(Connection con, String action, String params) throws Exception {
+        if (action == null) return;
+        switch (action) {
+            case "notify":
+                if (params != null && !params.isEmpty()) Service.gI().sendThongBaoAllPlayer(params);
+                break;
+            case "reset_boss":
+                BossManager.gI().loadBoss();
+                break;
+            case "reset_rank":
+                resetRank();
+                break;
+            case "event_on":
+                if (params != null) setConfigValue(con, "event_" + params.trim(), "1");
+                break;
+            case "event_off":
+                if (params != null) setConfigValue(con, "event_" + params.trim(), "0");
+                break;
+            case "maintenance":
+                setConfigValue(con, "maintenance", "1");
+                break;
+        }
+    }
+
+    /** Ghi 1 khoá cấu hình từ server (để lịch cập nhật server_config) */
+    private void setConfigValue(Connection con, String key, String value) throws Exception {
+        try (PreparedStatement ps = con.prepareStatement(
+                "INSERT INTO server_config (cfg_key, cfg_value) VALUES (?, ?) "
+                + "ON DUPLICATE KEY UPDATE cfg_value = VALUES(cfg_value)")) {
+            ps.setString(1, key);
+            ps.setString(2, value);
+            ps.executeUpdate();
         }
     }
 
