@@ -63,6 +63,17 @@ chạy đúng giờ, **mỗi lịch 1 lần/ngày** (cột `last_run`). Hành đ
 `reset_rank`, `event_on`/`event_off` (params = tên sự kiện), `maintenance`.
 Bật/tắt sự kiện qua lịch sẽ cập nhật `server_config` để đồng bộ.
 
+## Hot-reload template (`do_reload_data`)
+
+Khi admin sửa bất kỳ trang **Dữ liệu game**, `crud_lib` bump `server_config.do_reload_data`.
+`WebControlService` phát hiện → gọi `Manager.reloadTemplatesFromWeb()` (nạp lại **item_template,
+item_option_template, mob_template, npc_template, intrinsic, achievement_template, shop** vào các
+List đang chạy) — **áp dụng ngay, không restart**. `loadDatabase()` giữ nguyên nên khởi động không đổi;
+hàm reload chạy độc lập + try/catch nên không ảnh hưởng game nếu lỗi.
+
+> Live: item/mob/npc/nội tại/danh hiệu/shop. Các template khác (skill, nhiệm vụ, bản đồ, bg/avatar…)
+> hiện áp dụng khi server nạp lại/khởi động; có thể bổ sung vào `reloadTemplatesFromWeb()` theo cùng mẫu.
+
 ## Phúc lợi — quà bùa miễn phí (`daily_gift_reward`)
 
 Kho bùa miễn phí hằng ngày (NPC Bà Hạt Mít). WebControlService nạp các dòng `enabled=1`
