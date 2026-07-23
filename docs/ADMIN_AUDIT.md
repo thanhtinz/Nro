@@ -1,5 +1,8 @@
 # Audit — Admin quản lý được gì trong game
 
+> **Đa máy chủ:** admin chọn máy chủ ở góc phải header (mỗi máy chủ 1 DB riêng) → mọi trang thao tác trên máy chủ đang chọn. Thêm/sửa kết nối DB máy chủ ở trang **Máy chủ QL** (`manage_servers.php`, lưu ở `servers.config.php`). Trang đăng nhập cũng cho chọn máy chủ trước khi đăng nhập.
+
+
 Cập nhật theo tiến độ. ✅ = đã có trong panel, ⏳ = cần làm thêm.
 
 ## Tài khoản & người chơi

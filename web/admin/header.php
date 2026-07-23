@@ -31,8 +31,18 @@ $__title  = $__title  ?? 'Admin';
         <a href="schedule.php" class="<?= $__active==='schedule'?'on':'' ?>">Lịch</a>
         <a href="welfare.php"  class="<?= $__active==='welfare'?'on':'' ?>">Phúc lợi</a>
         <a href="servers.php"  class="<?= $__active==='servers'?'on':'' ?>">Máy chủ</a>
+        <a href="manage_servers.php" class="<?= $__active==='manage_servers'?'on':'' ?>">Máy chủ QL</a>
     </nav>
     <div class="me">
+        <?php $__servers = admin_servers(); $__curKey = admin_current_key(); ?>
+        <form method="post" class="svpick" title="Máy chủ đang quản lý">
+            🖥️
+            <select name="__switch_sv" onchange="this.form.submit()">
+                <?php foreach ($__servers as $s): ?>
+                    <option value="<?= e($s['key']) ?>" <?= $s['key']===$__curKey?'selected':'' ?>><?= e($s['name']) ?></option>
+                <?php endforeach; ?>
+            </select>
+        </form>
         <span><?= e($_SESSION['admin_username'] ?? '') ?></span>
         <a href="logout.php" class="logout">Đăng xuất</a>
     </div>
