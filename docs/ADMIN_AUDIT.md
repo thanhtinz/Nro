@@ -32,8 +32,10 @@ Cập nhật theo tiến độ. ✅ = đã có trong panel, ⏳ = cần làm th�
 ## Lịch hoạt động (config-sync)
 - ✅ **Lịch hoạt động** (`server_schedule`): admin đặt giờ (HH:MM) + hành động (thông báo, reset boss, reset BXH, bật/tắt sự kiện, bảo trì); server tự chạy đúng giờ, mỗi lịch 1 lần/ngày. Trang **Lịch**.
 
+## Phúc lợi (config-sync)
+- ✅ **Phúc lợi — quà bùa miễn phí hằng ngày** (`daily_gift_reward`): admin chỉnh kho bùa (item id, thời hạn, bật/tắt); server nạp lại mỗi ~3s (`DailyGiftConfig`) và Bà Hạt Mít bốc ngẫu nhiên từ kho — **chỉnh là chạy, không cần restart**. Trang **Phúc lợi**.
+
 ## Còn thiếu / cần thiết kế thêm
-- ⏳ **Phúc lợi / điểm danh (daily gift) chi tiết**: phần thưởng daily gift **hardcode trong code** (`ConstDailyGift`, `DailyGiftService` — 2 mốc), không có bảng phần thưởng → sửa nội dung quà cần **thêm bảng `daily_gift_reward` + sửa server đọc**. (Có thể tạm dùng **Lịch** để phát quà/thông báo phúc lợi theo giờ.)
 - ⏳ **Chat thế giới từ web**: hiện có thông báo popup. Chat kênh thế giới cần thêm hành động gọi `ChatGlobalService`.
 - ⏳ **Thư (mail) offline**: source không có bảng lưu thư → cần thêm bảng + server phát khi người chơi online.
 - ⏳ **Kỹ năng** (`skill_template`) — khoá kép, cần trang riêng.

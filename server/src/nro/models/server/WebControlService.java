@@ -8,10 +8,13 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import nro.models.data.LocalManager;
 import nro.models.boss.Boss_Manager.BossManager;
 import nro.models.services.Service;
 import nro.models.event.EventManager;
+import nro.models.daily_Giftcode.DailyGiftConfig;
 import nro.models.utils.Logger;
 
 /**
@@ -68,6 +71,7 @@ public class WebControlService extends Thread {
                 Map<String, String> cfg = readConfig();
                 applySettings(cfg);
                 applyTriggers(cfg);
+                loadWelfare();
                 checkSchedule();
                 writeStatus();
             } catch (Exception e) {
@@ -162,6 +166,20 @@ public class WebControlService extends Thread {
                 }
                 break;
         }
+    }
+
+    /** Nạp kho quà bùa miễn phí hằng ngày từ bảng daily_gift_reward */
+    private void loadWelfare() throws Exception {
+        List<int[]> pool = new ArrayList<>();
+        try (Connection con = LocalManager.getConnection();
+             PreparedStatement ps = con.prepareStatement(
+                     "SELECT item_id, duration_min FROM daily_gift_reward WHERE enabled = 1");
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                pool.add(new int[]{rs.getInt("item_id"), rs.getInt("duration_min")});
+            }
+        }
+        DailyGiftConfig.setPool(pool);
     }
 
     /** Kiểm tra lịch hoạt động: chạy hành động đúng giờ, mỗi ngày 1 lần */

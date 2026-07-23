@@ -41,6 +41,22 @@ INSERT IGNORE INTO `server_status` (`sv_key`, `sv_value`) VALUES
   ('online_players', '0'), ('rate_exp', '1'), ('maintenance', '0'),
   ('last_heartbeat', '0'), ('uptime', '0'), ('events', '');
 
+-- Phúc lợi: kho quà bùa miễn phí hằng ngày (Bà Hạt Mít). Server bốc ngẫu nhiên 1 dòng enabled.
+CREATE TABLE IF NOT EXISTS `daily_gift_reward` (
+  `id`           INT(11) NOT NULL AUTO_INCREMENT,
+  `item_id`      INT(11)      NOT NULL,          -- id vật phẩm (bùa)
+  `duration_min` INT(11)      NOT NULL DEFAULT 60, -- thời hạn (phút)
+  `enabled`      TINYINT(1)   NOT NULL DEFAULT 1,
+  `note`         VARCHAR(255) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Mặc định giống code cũ: bùa 213..219, thời hạn 60 phút
+INSERT IGNORE INTO `daily_gift_reward` (`id`,`item_id`,`duration_min`,`enabled`,`note`) VALUES
+  (1,213,60,1,'Bùa mặc định'),(2,214,60,1,'Bùa mặc định'),(3,215,60,1,'Bùa mặc định'),
+  (4,216,60,1,'Bùa mặc định'),(5,217,60,1,'Bùa mặc định'),(6,218,60,1,'Bùa mặc định'),
+  (7,219,60,1,'Bùa mặc định');
+
 -- Lịch hoạt động: admin đặt giờ + hành động; server tự chạy mỗi ngày
 CREATE TABLE IF NOT EXISTS `server_schedule` (
   `id`       INT(11) NOT NULL AUTO_INCREMENT,
