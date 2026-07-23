@@ -23,19 +23,12 @@ $__title  = $__title  ?? 'Admin';
         <a href="giftcode.php" class="<?= $__active==='giftcode'?'on':'' ?>">Giftcode</a>
         <a href="notify.php"   class="<?= $__active==='notify'?'on':'' ?>">Thông báo</a>
         <a href="payments.php" class="<?= $__active==='payments'?'on':'' ?>">Nạp thẻ</a>
+        <a href="data.php"     class="<?= $__active==='data'?'on':'' ?>">Dữ liệu game</a>
+        <span class="navsep"></span>
         <a href="server.php"   class="<?= $__active==='server'?'on':'' ?>">⚙ Server</a>
         <a href="events.php"   class="<?= $__active==='events'?'on':'' ?>">Sự kiện</a>
         <a href="schedule.php" class="<?= $__active==='schedule'?'on':'' ?>">Lịch</a>
         <a href="welfare.php"  class="<?= $__active==='welfare'?'on':'' ?>">Phúc lợi</a>
-        <span class="navsep"></span>
-        <a href="items.php"  class="<?= $__active==='items'?'on':'' ?>">Vật phẩm</a>
-        <a href="bosses.php" class="<?= $__active==='bosses'?'on':'' ?>">Boss/Quái</a>
-        <a href="npcs.php"   class="<?= $__active==='npcs'?'on':'' ?>">NPC</a>
-        <a href="maps.php"   class="<?= $__active==='maps'?'on':'' ?>">Bản đồ</a>
-        <a href="badges.php" class="<?= $__active==='badges'?'on':'' ?>">Danh hiệu</a>
-        <a href="shops.php"  class="<?= $__active==='shops'?'on':'' ?>">Cửa hàng</a>
-        <a href="clans.php"  class="<?= $__active==='clans'?'on':'' ?>">Bang hội</a>
-        <a href="tasks.php"  class="<?= $__active==='tasks'?'on':'' ?>">Nhiệm vụ</a>
     </nav>
     <div class="me">
         <span><?= e($_SESSION['admin_username'] ?? '') ?></span>

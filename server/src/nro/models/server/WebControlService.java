@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.ArrayList;
 import java.util.List;
 import nro.models.data.LocalManager;
+import nro.models.database.ShopDAO;
 import nro.models.boss.Boss_Manager.BossManager;
 import nro.models.services.Service;
 import nro.models.event.EventManager;
@@ -44,7 +45,7 @@ public class WebControlService extends Thread {
         "HALLOWEEN", "HUNG_VUONG", "TRUNG_THU", "TOP_UP"
     };
     private static final String[] TRIGGERS = {
-        "do_reset_boss", "do_reset_rank", "do_restart", "notify_seq"
+        "do_reset_boss", "do_reset_rank", "do_restart", "notify_seq", "do_reload_shop"
     };
 
     private WebControlService() {
@@ -163,6 +164,12 @@ public class WebControlService extends Thread {
                 if (text != null && !text.isEmpty()) {
                     Service.gI().sendThongBaoAllPlayer(text);
                     Logger.success("[WebAdmin] Thông báo: " + text + "\n");
+                }
+                break;
+            case "do_reload_shop":
+                try (Connection con = LocalManager.getConnection()) {
+                    Manager.SHOPS = ShopDAO.getShops(con);
+                    Logger.success("[WebAdmin] Nạp lại shop (" + Manager.SHOPS.size() + ")\n");
                 }
                 break;
         }

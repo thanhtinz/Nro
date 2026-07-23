@@ -8,18 +8,17 @@ Cập nhật theo tiến độ. ✅ = đã có trong panel, ⏳ = cần làm th�
 - ✅ Nạp thẻ: xem lịch sử (SePay/thẻ)
 - ✅ Giftcode: tạo/xoá + phần thưởng (cũng là cách cấp vật phẩm)
 
-## Dữ liệu game (sửa DB, hiệu lực sau reload/restart)
-- ✅ Vật phẩm (`item_template`)
-- ✅ Quái/Boss (`mob_template`)
-- ✅ NPC (`npc_template`)
-- ✅ Bản đồ (`map_template`)
-- ✅ Danh hiệu (`achievement_template`)
-- ✅ Cửa hàng (`shop`)
+## Dữ liệu game (trang riêng, gom ở hub **Dữ liệu game**)
+Cửa hàng: **sửa là áp dụng ngay** (server tự nạp lại `SHOPS`, không restart). Các template khác: sửa DB, áp dụng khi server nạp lại dữ liệu.
+- ✅ Vật phẩm (`item_template`), Option vật phẩm (`item_option_template`), Đồ nền (`bg_item_template`), Avatar đầu (`head_avatar`)
+- ✅ **Cửa hàng LIVE**: `shop`, `tab_shop`, `item_shop`, shop ký gửi (`shop_ky_gui`)
+- ✅ Quái/Boss (`mob_template`), NPC (`npc_template`), Bản đồ (`map_template`)
+- ✅ Nhiệm vụ: chính (`task_main_template`), con (`task_sub_template`), phụ (`side_task_template`), bang (`clan_task_template`), huy hiệu (`task_badges_template`)
+- ✅ Danh hiệu (`achievement_template`), Huy hiệu (`data_badges`)
 - ✅ Bang hội (`clan`)
-- ✅ Nhiệm vụ chính (`task_main_template`)
-- ⏳ Kỹ năng (`skill_template`) — khoá chính ghép `(nclass_id,id)`, cần trang xử lý khoá kép
-- ⏳ Tab/Item trong shop (`tab_shop`, `item_shop`, `item_shop_option`) — quan hệ lồng nhau
-- ⏳ Nhiệm vụ phụ (`side_task_template`), danh hiệu nhiệm vụ (`task_badges_template`)
+- ✅ Forum: bài (`posts`), bình luận (`comments`), phòng chat (`phongchat`)
+- ⏳ Kỹ năng (`skill_template`) — khoá kép `(nclass_id,id)`, cần trang riêng
+- ⏳ Nội tại (`intrinsic`), bộ phận (`part`) — bảng không có khoá chính đơn, cần trang riêng
 
 ## Điều khiển server (runtime — config-sync, chỉnh là server tự áp dụng)
 - ✅ Hệ số EXP (`rate_exp`) — chỉnh giá trị
