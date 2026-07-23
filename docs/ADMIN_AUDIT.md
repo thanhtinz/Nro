@@ -38,7 +38,7 @@ Cập nhật theo tiến độ. ✅ = đã có trong panel, ⏳ = cần làm th�
 - ✅ **Phúc lợi — quà bùa miễn phí hằng ngày** (`daily_gift_reward`): admin chỉnh kho bùa (item id, thời hạn, bật/tắt); server nạp lại mỗi ~3s (`DailyGiftConfig`) và Bà Hạt Mít bốc ngẫu nhiên từ kho — **chỉnh là chạy, không cần restart**. Trang **Phúc lợi**.
 
 ## Gói quà / hộp quà (config-sync)
-- ✅ **Gói quà** (`gift_package`): tạo gói (tên, tiêu đề+nội dung mail, vật phẩm), lưu lại, bấm **Gửi** → phát cho **toàn bộ người chơi** qua hộp quà (online nhận trong ~3s, offline nhận khi đăng nhập; mỗi người 1 lần/lượt). Trang **Gói quà**.
+- ✅ **Gói quà + Hòm thư** (`gift_package`/`gift_mail`): tạo gói (tên, tiêu đề+nội dung mail, vật phẩm), lưu lại, bấm **Gửi** → người chơi được **tự mở Hòm thư trong game**, đọc nội dung rồi **bấm "Nhận quà"** mới vào túi (menu CON_MEO server-driven, không sửa client). Mỗi người 1 lần/lượt. Trang **Gói quà**.
 
 ## Còn thiếu / cần thiết kế thêm
 - ⏳ **Chat thế giới từ web**: hiện có thông báo popup. Chat kênh thế giới cần thêm hành động gọi `ChatGlobalService`.

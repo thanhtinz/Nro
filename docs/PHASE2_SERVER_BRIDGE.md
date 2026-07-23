@@ -68,11 +68,13 @@ Bật/tắt sự kiện qua lịch sẽ cập nhật `server_config` để đồ
 Trang **Gói quà**: admin tạo gói (tên, tiêu đề mail, nội dung, danh sách vật phẩm), lưu lại tái dùng;
 bấm **Gửi** → snapshot vào `gift_mail` + `gift_mail_item`.
 
-`GiftPackageService.deliverToOnline()` (gọi trong vòng lặp WebControlService mỗi ~3s): với mỗi
-người **đang online**, phát các lượt gửi chưa nhận (không có trong `gift_mail_received`) — cộng vật
-phẩm vào túi (dùng `InventoryService.addItemBag`, đúng như giftcode) + hiện nội dung mail
-(`NpcService.createTutorial`). Ai vừa đăng nhập cũng nhận trong ~3s — **không cần sửa code login**.
-Mỗi người chỉ nhận 1 lần/lượt (khoá chính `gift_mail_received(mail_id, player_id)` chống trùng).
+**Hòm thư trong game (đọc → bấm Nhận):** `GiftPackageService.promptOnline()` (vòng lặp WebControlService
+mỗi ~3s): người **đang online** có thư chưa nhận sẽ được **tự mở menu "Hòm thư"** (dùng menu CON_MEO
+server-driven, **không cần sửa client**; nhắc tối đa mỗi 2 phút). Người chơi **chọn thư → đọc nội dung +
+xem quà → bấm "Nhận quà"** thì mới cộng vật phẩm vào túi (`InventoryService.addItemBag` như giftcode).
+Ai vừa đăng nhập cũng được nhắc — **không sửa code login**. Mỗi người 1 lần/lượt (khoá chính
+`gift_mail_received` chống trùng). Tích hợp: 2 case `IDX_MAILBOX_LIST`/`IDX_MAILBOX_VIEW` trong
+`NpcFactory` (CON_MEO), thêm `Client.getPlayers()`.
 
 - `item_id`: `-1`=vàng, `-2`=ngọc, `-3`=ngọc khoá; `>=0` = item template id.
 - File liên quan: `server/.../GiftPackageService.java`, thêm `Client.getPlayers()`.

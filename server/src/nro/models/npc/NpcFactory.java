@@ -321,6 +321,10 @@ public class NpcFactory {
                     case ConstNpc.IGNORE_MENU -> {
                         // Không làm gì
                     }
+                    case nro.models.server.GiftPackageService.IDX_MAILBOX_LIST ->
+                        nro.models.server.GiftPackageService.onSelectList(player, select);
+                    case nro.models.server.GiftPackageService.IDX_MAILBOX_VIEW ->
+                        nro.models.server.GiftPackageService.onSelectView(player, select);
 
                     case ConstNpc.SUMMON_SHENRON_EVENT -> {
                         if (select == 0) {
