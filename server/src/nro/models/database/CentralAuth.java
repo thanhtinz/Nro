@@ -72,34 +72,14 @@ public final class CentralAuth {
         if (!enabled) {
             return DISABLED;
         }
-        HttpURLConnection conn = null;
         try {
-            conn = (HttpURLConnection) new URL(url).openConnection();
-            conn.setRequestMethod("POST");
-            conn.setConnectTimeout(3000);
-            conn.setReadTimeout(5000);
-            conn.setDoOutput(true);
-            conn.setRequestProperty("X-Auth-Key", key);
-            conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-            String body = "username=" + URLEncoder.encode(username, "UTF-8")
-                    + "&password=" + URLEncoder.encode(password, "UTF-8");
-            try (OutputStream os = conn.getOutputStream()) {
-                os.write(body.getBytes(StandardCharsets.UTF_8));
-            }
-            int status = conn.getResponseCode();
-            InputStream is = status >= 400 ? conn.getErrorStream() : conn.getInputStream();
-            StringBuilder sb = new StringBuilder();
-            try (BufferedReader br = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
-                String line;
-                while ((line = br.readLine()) != null) {
-                    sb.append(line);
-                }
-            }
-            Object parsed = JSONValue.parse(sb.toString());
-            if (!(parsed instanceof JSONObject)) {
+            JSONObject res = postForm(url,
+                    "username=" + URLEncoder.encode(username, "UTF-8")
+                    + "&password=" + URLEncoder.encode(password, "UTF-8"));
+            if (res == null) {
                 return ERROR;
             }
-            String code = String.valueOf(((JSONObject) parsed).get("code"));
+            String code = String.valueOf(res.get("code"));
             switch (code) {
                 case "ok":
                     return OK;
@@ -116,6 +96,59 @@ public final class CentralAuth {
             }
         } catch (Exception e) {
             return ERROR;
+        }
+    }
+
+    /**
+     * Đăng ký tài khoản từ trong game (cổng gửi mail xác minh).
+     * Trả về {code, message} hoặc null nếu auth tập trung tắt / cổng lỗi.
+     */
+    public static String[] register(String username, String password, String email) {
+        loadConfig();
+        if (!enabled) {
+            return null;
+        }
+        try {
+            JSONObject res = postForm(url.replace("/verify", "/register"),
+                    "username=" + URLEncoder.encode(username, "UTF-8")
+                    + "&password=" + URLEncoder.encode(password, "UTF-8")
+                    + "&email=" + URLEncoder.encode(email, "UTF-8"));
+            if (res == null) {
+                return null;
+            }
+            return new String[]{String.valueOf(res.get("code")), String.valueOf(res.get("message"))};
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /** POST form tới cổng, trả về JSON (null nếu lỗi). */
+    private static JSONObject postForm(String targetUrl, String body) {
+        HttpURLConnection conn = null;
+        try {
+            conn = (HttpURLConnection) new URL(targetUrl).openConnection();
+            conn.setRequestMethod("POST");
+            conn.setConnectTimeout(3000);
+            conn.setReadTimeout(5000);
+            conn.setDoOutput(true);
+            conn.setRequestProperty("X-Auth-Key", key);
+            conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+            try (OutputStream os = conn.getOutputStream()) {
+                os.write(body.getBytes(StandardCharsets.UTF_8));
+            }
+            int status = conn.getResponseCode();
+            InputStream is = status >= 400 ? conn.getErrorStream() : conn.getInputStream();
+            StringBuilder sb = new StringBuilder();
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    sb.append(line);
+                }
+            }
+            Object parsed = JSONValue.parse(sb.toString());
+            return (parsed instanceof JSONObject) ? (JSONObject) parsed : null;
+        } catch (Exception e) {
+            return null;
         } finally {
             if (conn != null) {
                 conn.disconnect();

@@ -83,7 +83,7 @@ namespace Game1.Assets.src.g
 			{
 				width = 220,
 				height = mScreen.ITEM_HEIGHT + 2,
-				name = "Mã giới thiệu"
+				name = "Email (nhận mail xác minh)"
 			};
 			focus = 0;
 			int num = 4;
@@ -339,8 +339,13 @@ namespace Game1.Assets.src.g
 					GameCanvas.startOKDlg("Vui lòng điền đầy đủ thông tin");
 					break;
 				}
+				if (!tfMaGioiThieu.getText().Contains("@"))
+				{
+					GameCanvas.startOKDlg("Vui lòng nhập email hợp lệ để nhận mail xác minh tài khoản");
+					break;
+				}
 				GameCanvas.startOKDlg(mResources.PLEASEWAIT);
-				Service.gI().charInfo("1", "1", "1", "1", "1", "1", (tfMaGioiThieu.getText().Length > 0) ? tfMaGioiThieu.getText() : "-1", tfUsername.getText(), tfPassword.getText());
+				Service.gI().charInfo("1", "1", "1", tfMaGioiThieu.getText(), "1", "1", "-1", tfUsername.getText(), tfPassword.getText());
 				break;
 			}
 		}

@@ -200,9 +200,8 @@ public class Controller implements IMessageHandler {
                     }
                     break;
                 case 42:
-//                    //Đăng ký tài khoản nhanh
-//                    Service.gI().regisAccount(_session, _msg);
-//                    break;
+                    registerAccount(_session, _msg);
+                    break;
                 case -127:
                     if (player != null) {
                         LuckyRound.gI().readOpenBall(player, _msg);
@@ -901,6 +900,39 @@ public class Controller implements IMessageHandler {
             if (created) {
                 session.login(session.uu, session.pp);
             }
+        }
+    }
+
+    /**
+     * Đăng ký tài khoản ngay trong game (cmd 42 từ RegisterScreen):
+     * client gửi 9 chuỗi; vị trí 4 = email (client mới), 8 = tài khoản, 9 = mật khẩu.
+     * Cổng game tạo tài khoản + gửi mail xác minh.
+     */
+    public void registerAccount(MySession session, Message msg) {
+        try {
+            String[] fields = new String[9];
+            for (int i = 0; i < 9; i++) {
+                fields[i] = msg.reader().readUTF().trim();
+            }
+            String email = fields[3];
+            String username = fields[7].toLowerCase();
+            String password = fields[8];
+            if (username.isEmpty() || password.isEmpty()) {
+                Service.gI().sendThongBaoOK(session, "Vui lòng nhập đầy đủ tài khoản và mật khẩu");
+                return;
+            }
+            if (email.isEmpty() || "1".equals(email) || !email.contains("@")) {
+                Service.gI().sendThongBaoOK(session, "Vui lòng nhập email hợp lệ để nhận mail xác minh tài khoản");
+                return;
+            }
+            String[] res = nro.models.database.CentralAuth.register(username, password, email);
+            if (res == null) {
+                Service.gI().sendThongBaoOK(session, "Hệ thống đăng ký đang bảo trì. Vui lòng đăng ký tại: " + ServerManager.DOMAIN);
+                return;
+            }
+            Service.gI().sendThongBaoOK(session, res[1]);
+        } catch (Exception e) {
+            Service.gI().sendThongBaoOK(session, "Có lỗi xảy ra, vui lòng thử lại sau");
         }
     }
 
