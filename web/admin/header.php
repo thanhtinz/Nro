@@ -29,6 +29,7 @@ $__title  = $__title  ?? 'Admin';
         <a href="events.php"   class="<?= $__active==='events'?'on':'' ?>">Sự kiện</a>
         <a href="schedule.php" class="<?= $__active==='schedule'?'on':'' ?>">Lịch</a>
         <a href="welfare.php"  class="<?= $__active==='welfare'?'on':'' ?>">Phúc lợi</a>
+        <a href="servers.php"  class="<?= $__active==='servers'?'on':'' ?>">Máy chủ</a>
     </nav>
     <div class="me">
         <span><?= e($_SESSION['admin_username'] ?? '') ?></span>
