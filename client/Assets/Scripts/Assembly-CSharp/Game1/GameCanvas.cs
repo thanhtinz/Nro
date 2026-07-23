@@ -2409,23 +2409,7 @@ namespace Game1
 					mFont.tahoma_7_yellow.drawString(g, thongBaoTest, xThongBaoTranslate, num, 0);
 					g.setClip(0, 0, w, h);
 				}
-                if (false) // Chỉ 1 tab trên 1 nền tảng: đã tắt nút "Đổi Tab 2"
-                {
-                    g.drawImage(mScreen.keyTouch != 10000 ? GameScr.imgNut : GameScr.imgNutF,GameScr.xC - 20, GameScr.yC + 17 + mGraphics.addYWhenOpenKeyBoard, mGraphics.HCENTER | mGraphics.VCENTER);
-                    mFont.tahoma_7b_white.drawString(g, "Đổi\nTab 2", GameScr.xC - 19, GameScr.yC + 5 + mGraphics.addYWhenOpenKeyBoard, mGraphics.HCENTER | mGraphics.VCENTER);
-                    if (isPointerHoldIn(GameScr.xC - 35, GameScr.yC + 1 + mGraphics.addYWhenOpenKeyBoard, GameScr.imgNut.getWidth(), GameScr.imgNut.getHeight()))
-                    {
-                        mScreen.keyTouch = 10000;
-                        isPointerJustDown = false;
-                        isPointerJustDown = false;
-                        GameScr.gI().isPointerDowning = false;
-                        if (isPointerClick && isPointerJustRelease)
-                        {
-							Management.ChangeTab(1);
-                            isPointerClick = (isPointerJustDown = (isPointerJustRelease = false));
-                        }
-                    }
-                }
+                // Đã bỏ 2-tab: không còn nút "Đổi Tab 2".
             }
 			catch (Exception)
 			{
