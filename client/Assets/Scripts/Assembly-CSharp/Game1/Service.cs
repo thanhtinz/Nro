@@ -28,6 +28,27 @@ namespace Game1
 			return instance;
 		}
 
+		public void openMailbox()
+		{
+			Message message = null;
+			try
+			{
+				message = new Message(-106);
+				session.sendMessage(message);
+			}
+			catch (Exception ex)
+			{
+				ex.StackTrace.ToString();
+			}
+			finally
+			{
+				if (message != null)
+				{
+					message.cleanup();
+				}
+			}
+		}
+
 		public void gotoPlayer(int id)
 		{
 			Message message = null;
