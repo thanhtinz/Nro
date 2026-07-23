@@ -61,6 +61,24 @@ public class MrBlue {
         Player player = null;
         LocalResultSet rs = null;
         Player plInGame;
+
+        // Auth tập trung qua cổng game: OK -> đồng bộ account local rồi đăng nhập như cũ;
+        // WRONG/LOCKED -> chặn; NOT_FOUND/ERROR/DISABLED -> fallback tài khoản cũ trong DB game.
+        int centralAuth = CentralAuth.verify(session.uu, session.pp);
+        if (centralAuth == CentralAuth.WRONG_PASSWORD) {
+            Service.gI().sendThongBaoOK(session, "Thông tin tài khoản hoặc mật khẩu không chính xác");
+            Service.gI().sendLoginFail(session, false);
+            return null;
+        }
+        if (centralAuth == CentralAuth.LOCKED) {
+            Service.gI().sendThongBaoOK(session, "Tài khoản này đang bị khóa trên cổng game. Liên hệ Admin để biết thêm thông tin");
+            Service.gI().sendLoginFail(session, false);
+            return null;
+        }
+        if (centralAuth == CentralAuth.OK) {
+            CentralAuth.syncLocalAccount(session.uu, session.pp);
+        }
+
         try {
             rs = LocalManager.executeQuery("select * from account where username = ? and password = ?", session.uu, session.pp);
             if (rs.first()) {
