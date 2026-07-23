@@ -56,6 +56,13 @@ Server đọc `server_config` mỗi **~3 giây**, áp dụng setting (idempotent
 đồng thời cập nhật `server_status` (online, uptime, exp, maintenance, events, heartbeat).
 **Admin chỉ cần chỉnh giá trị & lưu — không cần bấm "gửi lệnh".**
 
+## Lịch hoạt động (`server_schedule`)
+
+Admin đặt lịch (giờ VN `HH:MM` + hành động) ở trang **Lịch**; server kiểm tra mỗi ~3 giây và
+chạy đúng giờ, **mỗi lịch 1 lần/ngày** (cột `last_run`). Hành động: `notify`, `reset_boss`,
+`reset_rank`, `event_on`/`event_off` (params = tên sự kiện), `maintenance`.
+Bật/tắt sự kiện qua lịch sẽ cập nhật `server_config` để đồng bộ.
+
 ## Kiểm tra hoạt động
 - Vào admin → **⚙ Server**: nếu thẻ "Trạng thái server" hiện 🟢 Online nghĩa là server đang gửi heartbeat (cầu nối chạy tốt).
 - Gửi thử lệnh "Gửi thông báo" — trong ít giây trạng thái lệnh chuyển sang **Xong** và người chơi thấy thông báo.

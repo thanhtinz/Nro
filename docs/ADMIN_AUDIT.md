@@ -29,11 +29,14 @@ Cập nhật theo tiến độ. ✅ = đã có trong panel, ⏳ = cần làm th�
 - ✅ Reset boss / Reset BXH / Restart (hành động 1 lần)
 - ✅ Trạng thái sống: online, uptime, EXP, bảo trì, sự kiện, heartbeat
 
+## Lịch hoạt động (config-sync)
+- ✅ **Lịch hoạt động** (`server_schedule`): admin đặt giờ (HH:MM) + hành động (thông báo, reset boss, reset BXH, bật/tắt sự kiện, bảo trì); server tự chạy đúng giờ, mỗi lịch 1 lần/ngày. Trang **Lịch**.
+
 ## Còn thiếu / cần thiết kế thêm
-- ⏳ **Phúc lợi / điểm danh (daily gift)**: hiện **hardcode trong code** (`ConstDailyGift`, `DailyGiftService`), không có bảng DB → muốn quản lý web cần **thêm bảng `daily_gift` + sửa server đọc từ bảng**.
-- ⏳ **Lịch hoạt động (khung giờ sự kiện/boss)**: điều khiển theo thời gian trong code → cần thêm bảng lịch + server đọc.
-- ⏳ **Chat thế giới từ web**: hiện có `notify_all` (popup). Chat kênh thế giới cần thêm lệnh riêng gọi `ChatGlobalService`.
+- ⏳ **Phúc lợi / điểm danh (daily gift) chi tiết**: phần thưởng daily gift **hardcode trong code** (`ConstDailyGift`, `DailyGiftService` — 2 mốc), không có bảng phần thưởng → sửa nội dung quà cần **thêm bảng `daily_gift_reward` + sửa server đọc**. (Có thể tạm dùng **Lịch** để phát quà/thông báo phúc lợi theo giờ.)
+- ⏳ **Chat thế giới từ web**: hiện có thông báo popup. Chat kênh thế giới cần thêm hành động gọi `ChatGlobalService`.
 - ⏳ **Thư (mail) offline**: source không có bảng lưu thư → cần thêm bảng + server phát khi người chơi online.
+- ⏳ **Kỹ năng** (`skill_template`) — khoá kép, cần trang riêng.
 
 ## Ghi chú vận hành
 - Sửa **template** (item/npc/map/boss/...) chỉ vào game sau khi **server reload/restart** (server nạp lúc khởi động).
