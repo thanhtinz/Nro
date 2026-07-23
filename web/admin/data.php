@@ -10,6 +10,11 @@ $GROUPS = [
         ['itemoptions.php', 'Option vật phẩm', 'item_option_template'],
         ['bgitems.php', 'Đồ nền / thời trang', 'bg_item_template'],
         ['headavatar.php', 'Avatar đầu', 'head_avatar'],
+        ['parts.php', 'Bộ phận (part)', 'part'],
+    ],
+    'Kỹ năng & nội tại' => [
+        ['skills.php', 'Kỹ năng', 'skill_template'],
+        ['intrinsic.php', 'Nội tại', 'intrinsic'],
     ],
     'Cửa hàng (sửa là áp dụng ngay)' => [
         ['shops.php', 'Cửa hàng', 'shop'],
